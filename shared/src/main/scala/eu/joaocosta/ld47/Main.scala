@@ -8,7 +8,6 @@ import eu.joaocosta.minart.extra._
 
 import scala.io.Source
 import scala.concurrent.duration._
-import scala.util.Random
 
 object Main extends MinartApp {
 
@@ -23,18 +22,10 @@ object Main extends MinartApp {
   val frameRate = FrameRate.fps60
   val terminateWhen = (_: State) => false
 
-  val resourceLoader = ResourceLoader.default()
-  val background = Image.loadPpmImage(resourceLoader.loadResource("bg.ppm"))
-  val logo = Image.loadPpmImage(resourceLoader.loadResource("logo.ppm"))
-  val gameOver = Image.loadPpmImage(resourceLoader.loadResource("gameover.ppm"))
-  val character = Image.loadPpmImage(resourceLoader.loadResource("char.ppm"))
-  val jets = Image.loadPpmImage(resourceLoader.loadResource("jets.ppm"))
-  val timeRift = Image.loadPpmImage(resourceLoader.loadResource("timerift.ppm"))
-
   val levels = List(
     Level(
-      track = Image.loadPpmImage(resourceLoader.loadResource("level1-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level1-col.ppm")).get,
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-col.ppm")).get,
       startPosition = (920, 580),
       riftWaypoints = List(
         (635, 750),
@@ -44,8 +35,8 @@ object Main extends MinartApp {
         (75, 930)),
       riftSpeed = 2.5),
     Level(
-      track = Image.loadPpmImage(resourceLoader.loadResource("level2-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level2-col.ppm")).get,
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level2-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level2-col.ppm")).get,
       startPosition = (75, 660.0),
       riftWaypoints = List(
         (75, 920),
@@ -58,8 +49,8 @@ object Main extends MinartApp {
         (935, 730)),
       riftSpeed = 3),
     Level(
-      track = Image.loadPpmImage(resourceLoader.loadResource("level3-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level3-col.ppm")).get,
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level3-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level3-col.ppm")).get,
       startPosition = (75, 550.0),
       riftWaypoints = List(
         (75, 850),
@@ -76,61 +67,6 @@ object Main extends MinartApp {
   val initialGameState = levels.head.initialState
 
   val tau = 2 * math.Pi
-
-  val renderLogo: CanvasIO[Unit] = logo.map(_.render(0, 0, Some(Color(0, 0, 0)))).getOrElse(CanvasIO.noop)
-  val renderGameOver: CanvasIO[Unit] = gameOver.map(_.render(16, 96, Some(Color(0, 0, 0)))).getOrElse(CanvasIO.noop)
-  val renderBackground: CanvasIO[Unit] = background.map(_.render(0, 0)).getOrElse(CanvasIO.noop)
-  val renderCharLeft: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, 0, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderCharBase: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, 16, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderCharRight: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, 32, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderJetLow: CanvasIO[Unit] = jets.map(_.render(128 - 8, 112 + 8, 0, 0, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderJetHigh: CanvasIO[Unit] = jets.map(_.render(128 - 8, 112 + 8, 0, 4, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-
-  def renderChar(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
-    val renderShip =
-      if (keyboardInput.isDown(Key.Left)) renderCharLeft
-      else if (keyboardInput.isDown(Key.Right)) renderCharRight
-      else renderCharBase
-    val renderJets: CanvasIO[Unit] =
-      if (keyboardInput.isDown(Key.Up)) CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetHigh else renderJetLow)
-      else CanvasIO.noop
-    renderJets.andThen(renderShip)
-  }
-
-  def renderTransformed(image: Image, transform: Transformation, colorMask: Option[Color] = None) = CanvasIO.accessCanvas { canvas =>
-    for {
-      y <- 0 until 224
-      x <- 0 until 256
-      (ix, iy) = transform(x, y)
-      color <- image.pixels.lift(iy.toInt).flatMap(_.lift(ix.toInt))
-      if !colorMask.contains(color)
-    } canvas.putPixel(x, y, color)
-  }
-
-  /*def renderTransformed(image: Image, transform: Transformation, colorMask: Option[Color] = None) = {
-    val pixels = for {
-      x <- 0 until 256
-      y <- 0 until 224
-      (ix, iy) = transform(x, y)
-      color <- Some(image).flatMap(_.pixels.lift(iy.toInt).flatMap(_.lift(ix.toInt)))
-      if !colorMask.contains(color)
-    } yield CanvasIO.putPixel(x, y, color)
-    CanvasIO.sequence_(pixels)
-  }*/
-
-  def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
-    val mapTransform =
-      Transformation.Translate(-state.player.x, -state.player.y)
-        .andThen(Transformation.Rotate(state.player.rotation))
-        .andThen(Transformation.Translate(128, 112))
-    val timeRiftTransform =
-      Transformation.Translate(state.timeRift.x - 128, state.timeRift.y - 128)
-        .andThen(mapTransform)
-    renderBackground
-      .andThen(renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))
-      .andThen(renderChar(keyboardInput))
-      .andThen(renderTransformed(timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
-  }
 
   def updatePlayer(level: Level, player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
     val topSpeed = 10.0
@@ -243,7 +179,7 @@ object Main extends MinartApp {
       for {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
-        _ <- renderBackground.andThen(renderLogo)
+        _ <- RenderOps.renderBackground.andThen(RenderOps.renderLogo)
         newState = if (keyboard.keysPressed(Key.Enter)) AppState.Intro(0.005, initialGameState) else AppState.Menu
         _ <- CanvasIO.redraw
       } yield newState
@@ -254,7 +190,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderTransformed(nextState.level.track, transform, Some(Color(0, 0, 0))))
+        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(nextState.level.track, transform, Some(Color(0, 0, 0))))
         newState = if (scale >= 1.0) nextState else AppState.Intro(scale + 0.005, nextState)
         _ <- CanvasIO.redraw
       } yield newState
@@ -265,7 +201,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderTransformed(lastState.level.track, transform, Some(Color(0, 0, 0))))
+        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(lastState.level.track, transform, Some(Color(0, 0, 0))))
         newState = if (scale <= 0.0) {
           if (checkEndgame(lastState.level, lastState.player, lastState.timeRift) == Some(PlayerWins))
             if (lastState.level == levels.last) AppState.Menu // TODO Win state
@@ -279,7 +215,7 @@ object Main extends MinartApp {
         keyboard <- CanvasIO.getKeyboardInput
         _ = frameCounter()
         _ <- CanvasIO.clear()
-        _ <- renderGameState(gs, keyboard)
+        _ <- RenderOps.renderGameState(gs, keyboard)
         newState = updateGameState(gs, keyboard)
         _ <- CanvasIO.redraw
       } yield newState
@@ -287,7 +223,7 @@ object Main extends MinartApp {
       for {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
-        _ <- renderBackground.andThen(renderGameOver)
+        _ <- RenderOps.renderBackground.andThen(RenderOps.renderGameOver)
         newState = if (keyboard.isDown(Key.Enter)) AppState.Menu else AppState.GameOver
         _ <- CanvasIO.redraw
       } yield newState
