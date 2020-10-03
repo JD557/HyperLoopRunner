@@ -8,6 +8,7 @@ import eu.joaocosta.minart.extra._
 
 import scala.io.Source
 import scala.concurrent.duration._
+import scala.util.Random
 
 object Main extends MinartApp {
 
@@ -26,6 +27,7 @@ object Main extends MinartApp {
   val background = Image.loadPpmImage(resourceLoader.loadResource("bg.ppm"))
   val logo = Image.loadPpmImage(resourceLoader.loadResource("logo.ppm"))
   val character = Image.loadPpmImage(resourceLoader.loadResource("char.ppm"))
+  val jets = Image.loadPpmImage(resourceLoader.loadResource("jets.ppm"))
   val timeRift = Image.loadPpmImage(resourceLoader.loadResource("timerift.ppm"))
 
   val levels = List(
@@ -48,7 +50,22 @@ object Main extends MinartApp {
 
   val renderLogo: CanvasIO[Unit] = logo.map(_.render(0, 0, Some(Color(0, 0, 0)))).getOrElse(CanvasIO.noop)
   val renderBackground: CanvasIO[Unit] = background.map(_.render(0, 0)).getOrElse(CanvasIO.noop)
-  val renderChar: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderCharLeft: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, 0, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderCharBase: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, 16, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderCharRight: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, 32, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderJetLow: CanvasIO[Unit] = jets.map(_.render(128 - 8, 112 + 8, 0, 0, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderJetHigh: CanvasIO[Unit] = jets.map(_.render(128 - 8, 112 + 8, 0, 4, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+
+  def renderChar(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
+    val renderShip =
+      if (keyboardInput.isDown(Key.Left)) renderCharLeft
+      else if (keyboardInput.isDown(Key.Right)) renderCharRight
+      else renderCharBase
+    val renderJets: CanvasIO[Unit] =
+      if (keyboardInput.isDown(Key.Up)) CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetHigh else renderJetLow)
+      else CanvasIO.noop
+    renderJets.andThen(renderShip)
+  }
 
   def renderTransformed(image: Image, transform: Transformation, colorMask: Option[Color] = None) = CanvasIO.accessCanvas { canvas =>
     for {
@@ -71,7 +88,7 @@ object Main extends MinartApp {
     CanvasIO.sequence_(pixels)
   }*/
 
-  def renderGameState(state: AppState.GameState): CanvasIO[Unit] = {
+  def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val mapTransform =
       Transformation.Translate(-state.player.x, -state.player.y)
         .andThen(Transformation.Rotate(state.player.rotation))
@@ -81,7 +98,7 @@ object Main extends MinartApp {
         .andThen(mapTransform)
     renderBackground
       .andThen(renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))
-      .andThen(renderChar)
+      .andThen(renderChar(keyboardInput))
       .andThen(renderTransformed(timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
   }
 
@@ -194,7 +211,7 @@ object Main extends MinartApp {
         keyboard <- CanvasIO.getKeyboardInput
         _ = frameCounter()
         _ <- CanvasIO.clear()
-        _ <- renderGameState(gs)
+        _ <- renderGameState(gs, keyboard)
         newState = updateGameState(gs, keyboard)
         _ <- CanvasIO.redraw
       } yield newState
