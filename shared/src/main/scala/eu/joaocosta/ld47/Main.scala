@@ -11,6 +11,11 @@ import scala.concurrent.duration._
 
 object Main extends MinartApp {
 
+  val initialGameState = AppState(
+    x = 920.0,
+    y = 580.0,
+    rotation = 0.0)
+
   type State = AppState
   val renderLoop = RenderLoop.default()
   val canvasSettings = Canvas.Settings(
@@ -18,7 +23,7 @@ object Main extends MinartApp {
     height = 224,
     scale = 2)
   val canvasManager: CanvasManager = CanvasManager.default(canvasSettings)
-  val initialState: AppState = AppState(0, 0, 0)
+  val initialState: AppState = initialGameState
   val frameRate = FrameRate.fps60
   val terminateWhen = (_: State) => false
 
@@ -26,10 +31,12 @@ object Main extends MinartApp {
 
   val background = Image.loadPpmImage(resourceLoader.loadResource("bg.ppm"))
   val map = Image.loadPpmImage(resourceLoader.loadResource("map.ppm"))
+  val character = Image.loadPpmImage(resourceLoader.loadResource("char.ppm"))
 
   val tau = 2 * math.Pi
 
   val renderBackground: CanvasIO[Unit] = background.map(_.render(0, 0)).getOrElse(CanvasIO.noop)
+  val renderChar: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
 
   def renderMap(posX: Double, posY: Double, rot: Double) = {
     val transform = Transformation.Translate(-posX, -posY)
@@ -44,23 +51,19 @@ object Main extends MinartApp {
     CanvasIO.sequence_(pixels)
   }
 
-  val initialAppState = AppState(
-    x = 0.0,
-    y = 0.0,
-    rotation = 0.0)
-
   def renderAppState(state: AppState): CanvasIO[Unit] = {
-    renderBackground.andThen(renderMap(state.x, state.y, state.rotation))
+    renderBackground.andThen(renderMap(state.x, state.y, state.rotation)).andThen(renderChar)
   }
 
   def updateAppState(state: AppState, keyboardInput: KeyboardInput): AppState = {
+    val maxSpeed = map.toOption.flatMap(_.pixels.lift(state.y.toInt).flatMap(_.lift(state.x.toInt))).map(_.r / 255.0 * 5).getOrElse(5.0)
     val newRot =
       if (keyboardInput.isDown(Key.Left)) state.rotation - 0.05
       else if (keyboardInput.isDown(Key.Right)) state.rotation + 0.05
       else state.rotation
     val speed =
-      if (keyboardInput.isDown(Key.Up)) 5.0
-      else if (keyboardInput.isDown(Key.Down)) -5.0
+      if (keyboardInput.isDown(Key.Up)) maxSpeed
+      else if (keyboardInput.isDown(Key.Down)) -maxSpeed
       else 0
     val speedX = speed * math.sin(state.rotation)
     val speedY = -speed * math.cos(state.rotation)
@@ -68,7 +71,14 @@ object Main extends MinartApp {
       if (newRot > tau) newRot - tau
       else if (newRot < 0) newRot + tau
       else newRot
-    state.copy(x = state.x + speedX, y = state.y + speedY, rotation = normalizedRot)
+    val nextX = state.x + speedX
+    val nextY = state.y + speedY
+    println(map.toOption.flatMap(_.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt))))
+    val stopped = map.toOption.flatMap(_.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt))).contains(Color(0, 0, 0))
+    if (stopped)
+      state.copy(rotation = normalizedRot)
+    else
+      state.copy(x = state.x + speedX, y = state.y + speedY, rotation = normalizedRot)
   }
 
   val frameCounter = {
