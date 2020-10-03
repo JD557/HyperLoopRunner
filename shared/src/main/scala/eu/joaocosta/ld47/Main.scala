@@ -136,28 +136,10 @@ object Main extends MinartApp {
   }
 
   def updateGameState(gameState: AppState.GameState, keyboardInput: KeyboardInput): AppState = {
-    if (checkEndgame(gameState.level, gameState.player, gameState.timeRift).isDefined) AppState.Outro(1.0, gameState)
+    if (gameState.isEndGame.isDefined) AppState.Outro(1.0, gameState)
     else gameState
       .updatePlayer(player => updatePlayer(gameState.level, player, keyboardInput))
       .updateTimeRift(timeRift => updateTimeRift(gameState.level, timeRift))
-  }
-
-  sealed trait EndGame
-  case object PlayerWins extends EndGame
-  case object PlayerLoses extends EndGame
-
-  def checkEndgame(level: Level, player: AppState.GameState.Player, timeRift: AppState.GameState.TimeRift): Option[EndGame] = {
-    val dPlayerX = (player.x - timeRift.x)
-    val dPlayerY = (player.y - timeRift.y)
-    val distance = dPlayerX * dPlayerX + dPlayerY * dPlayerY
-    if (distance < 128 * 128) {
-      val currentWaypoint = level.riftWaypoints(timeRift.currentWaypoint % level.riftWaypoints.size)
-      val dWaypointX = currentWaypoint._1 - timeRift.x
-      val dWayPointY = currentWaypoint._2 - timeRift.y
-      val scalarProduct = (dPlayerX * dWaypointX) + (dPlayerY * dWayPointY)
-      if (scalarProduct > 0) Some(PlayerLoses)
-      else Some(PlayerWins)
-    } else None
   }
 
   val frameCounter = {
@@ -203,7 +185,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Translate(128, 112))
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(lastState.level.track, transform, Some(Color(0, 0, 0))))
         newState = if (scale <= 0.0) {
-          if (checkEndgame(lastState.level, lastState.player, lastState.timeRift) == Some(PlayerWins))
+          if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
             if (lastState.level == levels.last) AppState.Menu // TODO Win state
             else AppState.Intro(0.005, levels.dropWhile(_ != lastState.level).tail.head.initialState) // TODO clean this up
           else AppState.GameOver
