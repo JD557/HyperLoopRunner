@@ -22,17 +22,27 @@ object Main extends MinartApp {
   val frameRate = FrameRate.fps60
   val terminateWhen = (_: State) => false
 
-  val initialGameState = AppState.GameState(
-    x = 920.0,
-    y = 580.0,
-    rotation = 0.0)
-
   val resourceLoader = ResourceLoader.default()
-
   val background = Image.loadPpmImage(resourceLoader.loadResource("bg.ppm"))
   val logo = Image.loadPpmImage(resourceLoader.loadResource("logo.ppm"))
   val map = Image.loadPpmImage(resourceLoader.loadResource("map.ppm"))
   val character = Image.loadPpmImage(resourceLoader.loadResource("char.ppm"))
+  val timeRift = Image.loadPpmImage(resourceLoader.loadResource("timerift.ppm"))
+
+  val levels = List(
+    Level(
+      background = background.get,
+      track = Image.loadPpmImage(resourceLoader.loadResource("map.ppm")).get,
+      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("map.ppm")).get,
+      startPosition = (920.0, 580.0),
+      riftWaypoints = List(
+        (635, 750),
+        (920, 750),
+        (920, 84),
+        (75, 84),
+        (75, 930))))
+
+  val initialGameState = levels.head.initialState
 
   val tau = 2 * math.Pi
 
@@ -40,12 +50,12 @@ object Main extends MinartApp {
   val renderBackground: CanvasIO[Unit] = background.map(_.render(0, 0)).getOrElse(CanvasIO.noop)
   val renderChar: CanvasIO[Unit] = character.map(_.render(128 - 8, 112 - 8, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
 
-  def renderMap(transform: Transformation) = {
+  def renderTransformed(image: Image, transform: Transformation) = {
     val pixels = for {
       x <- 0 until 256
       y <- 0 until 224
       (ix, iy) = transform(x, y)
-      color <- map.toOption.flatMap(_.pixels.lift(iy.toInt).flatMap(_.lift(ix.toInt)))
+      color <- Some(image).flatMap(_.pixels.lift(iy.toInt).flatMap(_.lift(ix.toInt)))
     } yield CanvasIO.putPixel(x, y, color)
     CanvasIO.sequence_(pixels)
   }
@@ -55,7 +65,7 @@ object Main extends MinartApp {
       Transformation.Translate(-state.x, -state.y)
         .andThen(Transformation.Rotate(state.rotation))
         .andThen(Transformation.Translate(128, 112))
-    renderBackground.andThen(renderMap(mapTransform)).andThen(renderChar)
+    renderBackground.andThen(renderTransformed(state.level.track, mapTransform)).andThen(renderChar)
   }
 
   def updateGameState(state: AppState.GameState, keyboardInput: KeyboardInput): AppState = {
@@ -113,11 +123,11 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderMap(transform))
+        _ <- renderBackground.andThen(renderTransformed(initialGameState.level.track, transform))
         newState = if (scale >= 1.0) initialGameState else AppState.Intro(scale + 0.005)
         _ <- CanvasIO.redraw
       } yield newState
-    case gs @ AppState.GameState(x, y, rot) =>
+    case gs @ AppState.GameState(_, x, y, rot) =>
       for {
         keyboard <- CanvasIO.getKeyboardInput
         _ = frameCounter()
