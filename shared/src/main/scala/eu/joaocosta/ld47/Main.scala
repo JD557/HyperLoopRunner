@@ -117,7 +117,7 @@ object Main extends MinartApp {
     val currentWaypoint = level.riftWaypoints(timeRift.currentWaypoint % level.riftWaypoints.size)
     val dx = currentWaypoint._1 - timeRift.x
     val dy = currentWaypoint._2 - timeRift.y
-    val waypointDist = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+    val waypointDist = math.sqrt(dx * dx + dy * dy)
     val nextWaypoint =
       if (waypointDist <= 10) timeRift.currentWaypoint + 1
       else timeRift.currentWaypoint
@@ -129,10 +129,30 @@ object Main extends MinartApp {
       currentWaypoint = nextWaypoint)
   }
 
-  def updateGameState(gameState: AppState.GameState, keyboardInput: KeyboardInput): AppState.GameState = {
-    gameState
+  def updateGameState(gameState: AppState.GameState, keyboardInput: KeyboardInput): AppState = {
+    if (checkEndgame(gameState.level, gameState.player, gameState.timeRift).isDefined) AppState.Menu
+    else gameState
       .updatePlayer(player => updatePlayer(gameState.level, player, keyboardInput))
       .updateTimeRift(timeRift => updateTimeRift(gameState.level, timeRift))
+  }
+
+  sealed trait EndGame
+  case object PlayerWins extends EndGame
+  case object PlayerLoses extends EndGame
+
+  def checkEndgame(level: Level, player: AppState.GameState.Player, timeRift: AppState.GameState.TimeRift): Option[EndGame] = {
+    val dPlayerX = (player.x - timeRift.x)
+    val dPlayerY = (player.y - timeRift.y)
+    val distance = dPlayerX * dPlayerX + dPlayerY * dPlayerY
+    if (distance < 128 * 128) {
+      val currentWaypoint = level.riftWaypoints(timeRift.currentWaypoint % level.riftWaypoints.size)
+      val dWaypointX = currentWaypoint._1 - timeRift.x
+      val dWayPointY = currentWaypoint._2 - timeRift.y
+      val scalarProduct = (dPlayerX * dWaypointX) + (dPlayerY * dWayPointY)
+      println(scalarProduct)
+      if (scalarProduct > 0) Some(PlayerLoses)
+      else Some(PlayerWins)
+    } else None
   }
 
   val frameCounter = {
