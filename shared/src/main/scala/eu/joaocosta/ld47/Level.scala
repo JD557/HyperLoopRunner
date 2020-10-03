@@ -10,8 +10,10 @@ case class Level(
   riftWaypoints: List[(Double, Double)]) {
   def initialState = AppState.GameState(
     level = this,
-    x = startPosition._1,
-    y = startPosition._2,
-    rotation = 0.0)
+    playerX = startPosition._1,
+    playerY = startPosition._2,
+    rotation = 0.0,
+    timeRiftX = riftWaypoints.head._1,
+    timeRiftY = riftWaypoints.head._2)
 }
 
