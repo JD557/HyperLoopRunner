@@ -4,6 +4,7 @@ sealed trait AppState
 object AppState {
   case object Menu extends AppState
   case class Intro(scale: Double) extends AppState
+  case class Outro(scale: Double, lastState: GameState) extends AppState
   case class GameState(
     level: Level,
     player: GameState.Player,
@@ -13,6 +14,7 @@ object AppState {
     def updateTimeRift(f: GameState.TimeRift => GameState.TimeRift): GameState =
       copy(timeRift = f(timeRift))
   }
+  case object GameOver extends AppState
 
   object GameState {
     case class Player(x: Double, y: Double, rotation: Double)
