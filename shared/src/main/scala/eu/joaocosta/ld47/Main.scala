@@ -124,14 +124,20 @@ object Main extends MinartApp {
     val dx = currentWaypoint._1 - timeRift.x
     val dy = currentWaypoint._2 - timeRift.y
     val waypointDist = math.sqrt(dx * dx + dy * dy)
+    val nx = dx / waypointDist
+    val ny = dy / waypointDist
     val nextWaypoint =
       if (waypointDist <= 10) timeRift.currentWaypoint + 1
       else timeRift.currentWaypoint
-    val vx = if (waypointDist == 0) 0.0 else dx / waypointDist * level.riftSpeed
-    val vy = if (waypointDist == 0) 0.0 else dy / waypointDist * level.riftSpeed
+    val vx = if (waypointDist == 0) 0.0 else nx * level.riftSpeed
+    val vy = if (waypointDist == 0) 0.0 else ny * level.riftSpeed
+    val rot: Double =
+      if (vx >= 0) -math.acos(-ny)
+      else math.acos(-ny)
     timeRift.copy(
       x = timeRift.x + vx,
       y = timeRift.y + vy,
+      rotation = rot,
       currentWaypoint = nextWaypoint)
   }
 

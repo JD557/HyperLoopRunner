@@ -44,7 +44,10 @@ object RenderOps {
         .andThen(Transformation.Rotate(state.player.rotation))
         .andThen(Transformation.Translate(128, 112))
     val timeRiftTransform =
-      Transformation.Translate(state.timeRift.x - 128, state.timeRift.y - 128)
+      Transformation.Translate(-128, -128)
+        .andThen(Transformation.Rotate(state.timeRift.rotation))
+        .andThen(Transformation.Translate(128, 128))
+        .andThen(Transformation.Translate(state.timeRift.x - 128, state.timeRift.y - 128))
         .andThen(mapTransform)
     RenderOps.renderBackground
       .andThen(RenderOps.renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))

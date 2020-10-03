@@ -32,7 +32,7 @@ object AppState {
 
   object GameState {
     case class Player(x: Double, y: Double, vx: Double, vy: Double, rotation: Double)
-    case class TimeRift(x: Double, y: Double, currentWaypoint: Int)
+    case class TimeRift(x: Double, y: Double, rotation: Double, currentWaypoint: Int)
 
     sealed trait EndGame
     object EndGame {

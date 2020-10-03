@@ -19,6 +19,7 @@ case class Level(
     timeRift = AppState.GameState.TimeRift(
       x = riftWaypoints.head._1,
       y = riftWaypoints.head._2,
+      rotation = 0.0,
       currentWaypoint = 0))
 }
 
