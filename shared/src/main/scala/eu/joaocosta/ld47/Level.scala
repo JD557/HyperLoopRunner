@@ -7,13 +7,17 @@ case class Level(
   track: Image,
   collisionMap: Image,
   startPosition: (Double, Double),
-  riftWaypoints: List[(Double, Double)]) {
+  riftWaypoints: List[(Double, Double)],
+  riftSpeed: Double) {
   def initialState = AppState.GameState(
     level = this,
-    playerX = startPosition._1,
-    playerY = startPosition._2,
-    rotation = 0.0,
-    timeRiftX = riftWaypoints.head._1,
-    timeRiftY = riftWaypoints.head._2)
+    player = AppState.GameState.Player(
+      x = startPosition._1,
+      y = startPosition._2,
+      rotation = 0.0),
+    timeRift = AppState.GameState.TimeRift(
+      x = riftWaypoints.head._1,
+      y = riftWaypoints.head._2,
+      currentWaypoint = 0))
 }
 

@@ -40,7 +40,8 @@ object Main extends MinartApp {
         (920, 750),
         (920, 84),
         (75, 84),
-        (75, 930))))
+        (75, 930)),
+      riftSpeed = 2.5))
 
   val initialGameState = levels.head.initialState
 
@@ -73,11 +74,11 @@ object Main extends MinartApp {
 
   def renderGameState(state: AppState.GameState): CanvasIO[Unit] = {
     val mapTransform =
-      Transformation.Translate(-state.playerX, -state.playerY)
-        .andThen(Transformation.Rotate(state.rotation))
+      Transformation.Translate(-state.player.x, -state.player.y)
+        .andThen(Transformation.Rotate(state.player.rotation))
         .andThen(Transformation.Translate(128, 112))
     val timeRiftTransform =
-      Transformation.Translate(state.timeRiftX - 128, state.timeRiftY - 128)
+      Transformation.Translate(state.timeRift.x - 128, state.timeRift.y - 128)
         .andThen(mapTransform)
     renderBackground
       .andThen(renderTransformed(state.level.track, mapTransform))
@@ -85,29 +86,54 @@ object Main extends MinartApp {
       .andThen(renderTransformed(timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
   }
 
-  def updateGameState(state: AppState.GameState, keyboardInput: KeyboardInput): AppState = {
-    val maxSpeed = map.toOption.flatMap(_.pixels.lift(state.playerY.toInt).flatMap(_.lift(state.playerX.toInt))).map(_.r / 255.0 * 5).getOrElse(5.0)
+  def updatePlayer(player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
+    val maxSpeed = map.toOption.flatMap(_.pixels.lift(player.y.toInt).flatMap(_.lift(player.x.toInt))).map(_.r / 255.0 * 5).getOrElse(5.0)
     val newRot =
-      if (keyboardInput.isDown(Key.Left)) state.rotation - 0.05
-      else if (keyboardInput.isDown(Key.Right)) state.rotation + 0.05
-      else state.rotation
+      if (keyboardInput.isDown(Key.Left)) player.rotation - 0.05
+      else if (keyboardInput.isDown(Key.Right)) player.rotation + 0.05
+      else player.rotation
     val speed =
       if (keyboardInput.isDown(Key.Up)) maxSpeed
       else if (keyboardInput.isDown(Key.Down)) -maxSpeed
       else 0
-    val speedX = speed * math.sin(state.rotation)
-    val speedY = -speed * math.cos(state.rotation)
+    val speedX = speed * math.sin(player.rotation)
+    val speedY = -speed * math.cos(player.rotation)
     val normalizedRot =
       if (newRot > tau) newRot - tau
       else if (newRot < 0) newRot + tau
       else newRot
-    val nextX = state.playerX + speedX
-    val nextY = state.playerY + speedY
+    val nextX = player.x + speedX
+    val nextY = player.y + speedY
     val stopped = map.toOption.flatMap(_.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt))).contains(Color(0, 0, 0))
     if (stopped)
-      state.copy(rotation = normalizedRot)
+      player.copy(rotation = normalizedRot)
     else
-      state.copy(playerX = state.playerX + speedX, playerY = state.playerY + speedY, rotation = normalizedRot)
+      player.copy(
+        x = player.x + speedX,
+        y = player.y + speedY,
+        rotation = normalizedRot)
+  }
+
+  def updateTimeRift(level: Level, timeRift: AppState.GameState.TimeRift): AppState.GameState.TimeRift = {
+    val currentWaypoint = level.riftWaypoints(timeRift.currentWaypoint % level.riftWaypoints.size)
+    val dx = currentWaypoint._1 - timeRift.x
+    val dy = currentWaypoint._2 - timeRift.y
+    val waypointDist = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+    val nextWaypoint =
+      if (waypointDist <= 10) timeRift.currentWaypoint + 1
+      else timeRift.currentWaypoint
+    val vx = if (waypointDist == 0) 0.0 else dx / waypointDist * level.riftSpeed
+    val vy = if (waypointDist == 0) 0.0 else dy / waypointDist * level.riftSpeed
+    timeRift.copy(
+      x = timeRift.x + vx,
+      y = timeRift.y + vy,
+      currentWaypoint = nextWaypoint)
+  }
+
+  def updateGameState(gameState: AppState.GameState, keyboardInput: KeyboardInput): AppState.GameState = {
+    gameState
+      .updatePlayer(player => updatePlayer(player, keyboardInput))
+      .updateTimeRift(timeRift => updateTimeRift(gameState.level, timeRift))
   }
 
   val frameCounter = {
@@ -136,7 +162,7 @@ object Main extends MinartApp {
     case AppState.Intro(scale) =>
       for {
         _ <- CanvasIO.clear()
-        transform = Transformation.Translate(-initialGameState.playerX, -initialGameState.playerY)
+        transform = Transformation.Translate(-initialGameState.player.x, -initialGameState.player.y)
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
