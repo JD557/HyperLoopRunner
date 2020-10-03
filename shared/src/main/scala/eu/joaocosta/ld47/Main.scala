@@ -25,15 +25,14 @@ object Main extends MinartApp {
   val resourceLoader = ResourceLoader.default()
   val background = Image.loadPpmImage(resourceLoader.loadResource("bg.ppm"))
   val logo = Image.loadPpmImage(resourceLoader.loadResource("logo.ppm"))
-  val map = Image.loadPpmImage(resourceLoader.loadResource("map.ppm"))
   val character = Image.loadPpmImage(resourceLoader.loadResource("char.ppm"))
   val timeRift = Image.loadPpmImage(resourceLoader.loadResource("timerift.ppm"))
 
   val levels = List(
     Level(
       background = background.get,
-      track = Image.loadPpmImage(resourceLoader.loadResource("map.ppm")).get,
-      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("map.ppm")).get,
+      track = Image.loadPpmImage(resourceLoader.loadResource("level1-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level1-col.ppm")).get,
       startPosition = (920.0, 580.0),
       riftWaypoints = List(
         (635, 750),
@@ -81,13 +80,13 @@ object Main extends MinartApp {
       Transformation.Translate(state.timeRift.x - 128, state.timeRift.y - 128)
         .andThen(mapTransform)
     renderBackground
-      .andThen(renderTransformed(state.level.track, mapTransform))
+      .andThen(renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))
       .andThen(renderChar)
       .andThen(renderTransformed(timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
   }
 
-  def updatePlayer(player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
-    val maxSpeed = map.toOption.flatMap(_.pixels.lift(player.y.toInt).flatMap(_.lift(player.x.toInt))).map(_.r / 255.0 * 5).getOrElse(5.0)
+  def updatePlayer(level: Level, player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
+    val maxSpeed = level.collisionMap.pixels.lift(player.y.toInt).flatMap(_.lift(player.x.toInt)).map(_.r / 255.0 * 5).getOrElse(5.0)
     val newRot =
       if (keyboardInput.isDown(Key.Left)) player.rotation - 0.05
       else if (keyboardInput.isDown(Key.Right)) player.rotation + 0.05
@@ -104,7 +103,7 @@ object Main extends MinartApp {
       else newRot
     val nextX = player.x + speedX
     val nextY = player.y + speedY
-    val stopped = map.toOption.flatMap(_.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt))).contains(Color(0, 0, 0))
+    val stopped = level.collisionMap.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt)).contains(Color(0, 0, 0))
     if (stopped)
       player.copy(rotation = normalizedRot)
     else
@@ -132,7 +131,7 @@ object Main extends MinartApp {
 
   def updateGameState(gameState: AppState.GameState, keyboardInput: KeyboardInput): AppState.GameState = {
     gameState
-      .updatePlayer(player => updatePlayer(player, keyboardInput))
+      .updatePlayer(player => updatePlayer(gameState.level, player, keyboardInput))
       .updateTimeRift(timeRift => updateTimeRift(gameState.level, timeRift))
   }
 
