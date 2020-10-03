@@ -3,7 +3,6 @@ package eu.joaocosta.ld47
 import eu.joaocosta.minart.extra._
 
 case class Level(
-  background: Image,
   track: Image,
   collisionMap: Image,
   startPosition: (Double, Double),

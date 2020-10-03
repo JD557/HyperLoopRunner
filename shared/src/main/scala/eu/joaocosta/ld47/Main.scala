@@ -33,17 +33,30 @@ object Main extends MinartApp {
 
   val levels = List(
     Level(
-      background = background.get,
       track = Image.loadPpmImage(resourceLoader.loadResource("level1-map.ppm")).get,
       collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level1-col.ppm")).get,
-      startPosition = (920.0, 580.0),
+      startPosition = (920, 580),
       riftWaypoints = List(
         (635, 750),
         (920, 750),
         (920, 84),
         (75, 84),
         (75, 930)),
-      riftSpeed = 2.5))
+      riftSpeed = 2.5),
+    Level(
+      track = Image.loadPpmImage(resourceLoader.loadResource("level2-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level2-col.ppm")).get,
+      startPosition = (75, 660.0),
+      riftWaypoints = List(
+        (75, 920),
+        (75, 490),
+        (125, 325),
+        (195, 225),
+        (370, 115),
+        (534, 97),
+        (935, 410),
+        (935, 730)),
+      riftSpeed = 3))
 
   val initialGameState = levels.head.initialState
 
@@ -193,30 +206,32 @@ object Main extends MinartApp {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
         _ <- renderBackground.andThen(renderLogo)
-        newState = if (keyboard.keysPressed(Key.Enter)) AppState.Intro(0.005) else AppState.Menu
+        newState = if (keyboard.keysPressed(Key.Enter)) AppState.Intro(0.005, initialGameState) else AppState.Menu
         _ <- CanvasIO.redraw
       } yield newState
-    case AppState.Intro(scale) =>
+    case AppState.Intro(scale, nextState) =>
       for {
         _ <- CanvasIO.clear()
-        transform = Transformation.Translate(-initialGameState.player.x, -initialGameState.player.y)
+        transform = Transformation.Translate(-nextState.player.x, -nextState.player.y)
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderTransformed(initialGameState.level.track, transform))
-        newState = if (scale >= 1.0) initialGameState else AppState.Intro(scale + 0.005)
+        _ <- renderBackground.andThen(renderTransformed(nextState.level.track, transform))
+        newState = if (scale >= 1.0) nextState else AppState.Intro(scale + 0.005, nextState)
         _ <- CanvasIO.redraw
       } yield newState
     case AppState.Outro(scale, lastState) =>
       for {
         _ <- CanvasIO.clear()
-        transform = Transformation.Translate(-initialGameState.player.x, -initialGameState.player.y)
+        transform = Transformation.Translate(-lastState.player.x, -lastState.player.y)
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderTransformed(initialGameState.level.track, transform))
+        _ <- renderBackground.andThen(renderTransformed(lastState.level.track, transform))
         newState = if (scale <= 0.0) {
-          if (checkEndgame(lastState.level, lastState.player, lastState.timeRift) == Some(PlayerWins)) AppState.Menu // TODO
+          if (checkEndgame(lastState.level, lastState.player, lastState.timeRift) == Some(PlayerWins))
+            if (lastState.level == levels.last) AppState.Menu // TODO Win state
+            else AppState.Intro(0.005, levels.dropWhile(_ != lastState.level).tail.head.initialState) // TODO clean this up
           else AppState.GameOver
         } else AppState.Outro(scale - 0.005, lastState)
         _ <- CanvasIO.redraw
