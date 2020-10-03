@@ -56,7 +56,22 @@ object Main extends MinartApp {
         (534, 97),
         (935, 410),
         (935, 730)),
-      riftSpeed = 3))
+      riftSpeed = 3),
+    Level(
+      track = Image.loadPpmImage(resourceLoader.loadResource("level3-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(resourceLoader.loadResource("level3-col.ppm")).get,
+      startPosition = (75, 550.0),
+      riftWaypoints = List(
+        (75, 850),
+        (115, 130),
+        (935, 130),
+        (895, 515),
+        (640, 340),
+        (515, 725),
+        (950, 725),
+        (950, 935),
+        (75, 935)),
+      riftSpeed = 4)).drop(2)
 
   val initialGameState = levels.head.initialState
 
@@ -118,7 +133,8 @@ object Main extends MinartApp {
   }
 
   def updatePlayer(level: Level, player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
-    val maxSpeed = level.collisionMap.pixels.lift(player.y.toInt).flatMap(_.lift(player.x.toInt)).map(_.r / 255.0 * 5).getOrElse(5.0)
+    val topSpeed = 10.0
+    val maxSpeed = level.collisionMap.pixels.lift(player.y.toInt).flatMap(_.lift(player.x.toInt)).map(_.r / 255.0 * topSpeed).getOrElse(topSpeed)
     val newRot =
       if (keyboardInput.isDown(Key.Left)) player.rotation - 0.05
       else if (keyboardInput.isDown(Key.Right)) player.rotation + 0.05
