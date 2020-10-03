@@ -13,6 +13,8 @@ case class Level(
     player = AppState.GameState.Player(
       x = startPosition._1,
       y = startPosition._2,
+      vx = 0,
+      vy = 0,
       rotation = 0.0),
     timeRift = AppState.GameState.TimeRift(
       x = riftWaypoints.head._1,

@@ -73,6 +73,7 @@ object Image {
   val empty: Image = Image(Vector.empty)
 
   def loadPpmImage(resource: Source): Try[Image] = Try {
+    println("loading resource")
     val it = resource.getLines().filterNot(_.startsWith("#")).flatMap(_.split(" "))
     val builder = Vector.newBuilder[Color]
     require(it.next() == "P3", "Invalid image header")

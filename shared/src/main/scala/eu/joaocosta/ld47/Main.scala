@@ -71,7 +71,7 @@ object Main extends MinartApp {
         (950, 725),
         (950, 935),
         (75, 935)),
-      riftSpeed = 4)).drop(2)
+      riftSpeed = 3.5))
 
   val initialGameState = levels.head.initialState
 
@@ -139,25 +139,47 @@ object Main extends MinartApp {
       if (keyboardInput.isDown(Key.Left)) player.rotation - 0.05
       else if (keyboardInput.isDown(Key.Right)) player.rotation + 0.05
       else player.rotation
-    val speed =
-      if (keyboardInput.isDown(Key.Up)) maxSpeed
-      else if (keyboardInput.isDown(Key.Down)) -maxSpeed
+    val accel =
+      if (keyboardInput.isDown(Key.Up)) 1.0
+      else if (keyboardInput.isDown(Key.Down)) -1.0
       else 0
-    val speedX = speed * math.sin(player.rotation)
-    val speedY = -speed * math.cos(player.rotation)
+    val deltaAccelX = accel * math.sin(player.rotation)
+    val deltaAccelY = -accel * math.cos(player.rotation)
+    val newRawSpeedX = player.vx * 0.9 + deltaAccelX
+    val newRawSpeedY = player.vy * 0.9 + deltaAccelY
+    val totalSpeed = math.sqrt((newRawSpeedX * newRawSpeedX) + (newRawSpeedY * newRawSpeedY))
+    val newSpeedX =
+      if (totalSpeed > 0) (newRawSpeedX / totalSpeed) * math.min(totalSpeed, maxSpeed)
+      else 0
+    val newSpeedY =
+      if (totalSpeed > 0) (newRawSpeedY / totalSpeed) * math.min(totalSpeed, maxSpeed)
+      else 0
     val normalizedRot =
       if (newRot > tau) newRot - tau
       else if (newRot < 0) newRot + tau
       else newRot
-    val nextX = player.x + speedX
-    val nextY = player.y + speedY
-    val stopped = level.collisionMap.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt)).contains(Color(0, 0, 0))
-    if (stopped)
-      player.copy(rotation = normalizedRot)
+    val nextX = player.x + newSpeedX
+    val nextY = player.y + newSpeedY
+    lazy val collision = level.collisionMap.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt)).exists(_.r == 0)
+    lazy val stopped = totalSpeed < 0.1
+    if (collision) {
+      player.copy(
+        x = player.x - newSpeedX,
+        y = player.y - newSpeedY,
+        vx = -newSpeedX,
+        vy = -newSpeedY,
+        rotation = normalizedRot)
+    } else if (stopped)
+      player.copy(
+        vx = 0,
+        vy = 0,
+        rotation = normalizedRot)
     else
       player.copy(
-        x = player.x + speedX,
-        y = player.y + speedY,
+        x = nextX,
+        y = nextY,
+        vx = newSpeedX,
+        vy = newSpeedY,
         rotation = normalizedRot)
   }
 
@@ -232,7 +254,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderTransformed(nextState.level.track, transform))
+        _ <- renderBackground.andThen(renderTransformed(nextState.level.track, transform, Some(Color(0, 0, 0))))
         newState = if (scale >= 1.0) nextState else AppState.Intro(scale + 0.005, nextState)
         _ <- CanvasIO.redraw
       } yield newState
@@ -243,7 +265,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- renderBackground.andThen(renderTransformed(lastState.level.track, transform))
+        _ <- renderBackground.andThen(renderTransformed(lastState.level.track, transform, Some(Color(0, 0, 0))))
         newState = if (scale <= 0.0) {
           if (checkEndgame(lastState.level, lastState.player, lastState.timeRift) == Some(PlayerWins))
             if (lastState.level == levels.last) AppState.Menu // TODO Win state

@@ -17,7 +17,7 @@ object AppState {
   case object GameOver extends AppState
 
   object GameState {
-    case class Player(x: Double, y: Double, rotation: Double)
+    case class Player(x: Double, y: Double, vx: Double, vy: Double, rotation: Double)
     case class TimeRift(x: Double, y: Double, currentWaypoint: Int)
   }
 }
