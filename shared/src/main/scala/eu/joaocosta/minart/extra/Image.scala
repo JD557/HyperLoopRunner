@@ -8,6 +8,14 @@ import eu.joaocosta.minart.pure._
 
 case class Image(pixels: Vector[Vector[Color]]) {
 
+  lazy val width = pixels.headOption.map(_.size).getOrElse(0)
+  lazy val height = pixels.size
+
+  def getPixel(x: Int, y: Int): Option[Color] = {
+    if (x < 0 || y < 0 || x >= width || y >= height) None
+    else Some(pixels(y)(x))
+  }
+
   def renderUnsafe(canvas: Canvas, x: Int, y: Int, mask: Option[Color]): Unit =
     for {
       iy <- (0 until pixels.length)

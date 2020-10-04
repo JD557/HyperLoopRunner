@@ -28,14 +28,19 @@ object RenderOps {
     renderJets.andThen(renderShip)
   }
 
+  private val allPixels = for {
+    y <- 0 until 224
+    x <- 0 until 256
+  } yield (x, y)
+
   def renderTransformed(image: Image, transform: Transformation, colorMask: Option[Color] = None) = CanvasIO.accessCanvas { canvas =>
-    for {
-      y <- 0 until 224
-      x <- 0 until 256
-      (ix, iy) = transform(x, y)
-      color <- image.pixels.lift(iy.toInt).flatMap(_.lift(ix.toInt))
-      if !colorMask.contains(color)
-    } canvas.putPixel(x, y, color)
+    allPixels.foreach {
+      case (x, y) =>
+        val (ix, iy) = transform(x, y)
+        image.getPixel(ix.toInt, iy.toInt).foreach { color =>
+          if (!colorMask.contains(color)) canvas.putPixel(x, y, color)
+        }
+    }
   }
 
   def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
@@ -46,8 +51,7 @@ object RenderOps {
     val timeRiftTransform =
       Transformation.Translate(-128, -128)
         .andThen(Transformation.Rotate(state.timeRift.rotation))
-        .andThen(Transformation.Translate(128, 128))
-        .andThen(Transformation.Translate(state.timeRift.x - 128, state.timeRift.y - 128))
+        .andThen(Transformation.Translate(state.timeRift.x, state.timeRift.y))
         .andThen(mapTransform)
     RenderOps.renderBackground
       .andThen(RenderOps.renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))

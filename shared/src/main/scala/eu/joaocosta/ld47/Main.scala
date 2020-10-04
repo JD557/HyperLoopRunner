@@ -26,7 +26,7 @@ object Main extends MinartApp {
 
   def updatePlayer(level: Level, player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
     val topSpeed = 10.0
-    val maxSpeed = level.collisionMap.pixels.lift(player.y.toInt).flatMap(_.lift(player.x.toInt)).map(_.r / 255.0 * topSpeed).getOrElse(topSpeed)
+    val maxSpeed = level.collisionMap.getPixel(player.x.toInt, player.y.toInt).map(_.r / 255.0 * topSpeed).getOrElse(topSpeed)
     val newRot =
       if (keyboardInput.isDown(Key.Left)) player.rotation - 0.05
       else if (keyboardInput.isDown(Key.Right)) player.rotation + 0.05
@@ -52,7 +52,7 @@ object Main extends MinartApp {
       else newRot
     val nextX = player.x + newSpeedX
     val nextY = player.y + newSpeedY
-    lazy val collision = level.collisionMap.pixels.lift(nextY.toInt).flatMap(_.lift(nextX.toInt)).exists(_.r == 0)
+    lazy val collision = level.collisionMap.getPixel(nextX.toInt, nextY.toInt).exists(_.r == 0)
     lazy val stopped = totalSpeed < 0.1
     if (collision) {
       player.copy(
