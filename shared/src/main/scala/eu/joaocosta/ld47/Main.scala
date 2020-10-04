@@ -63,7 +63,8 @@ object Main extends MinartApp {
         vx = -newSpeedX,
         vy = -newSpeedY,
         rotation = normalizedRot,
-        boost = newBoost)
+        boost = newBoost,
+        fuel = player.fuel - 0.01)
     } else if (stopped)
       player.copy(
         vx = 0,
@@ -77,7 +78,8 @@ object Main extends MinartApp {
         vx = newSpeedX,
         vy = newSpeedY,
         rotation = normalizedRot,
-        boost = newBoost)
+        boost = newBoost,
+        fuel = player.fuel - 0.00015)
   }
 
   def updateTimeRift(level: Level, timeRift: AppState.GameState.TimeRift): AppState.GameState.TimeRift = {

@@ -21,6 +21,10 @@ object RenderOps {
     Resources.boostEmpty.map(_.render(0, 0)).getOrElse(CanvasIO.noop).andThen(
       Resources.boostFull.map(_.render(0, 0, 0, 0, (64 * boostLevel).toInt, 8)).getOrElse(CanvasIO.noop))
 
+  def renderFuel(fuelLevel: Double): CanvasIO[Unit] =
+    Resources.fuelEmpty.map(_.render(0, 8)).getOrElse(CanvasIO.noop).andThen(
+      Resources.fuelFull.map(_.render(0, 8, 0, 0, (64 * fuelLevel).toInt, 8)).getOrElse(CanvasIO.noop))
+
   def renderPlayer(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val renderShip =
       if (keyboardInput.isDown(Key.Left)) renderShipLeft
@@ -62,6 +66,7 @@ object RenderOps {
       .andThen(renderPlayer(keyboardInput))
       .andThen(renderTransformed(Resources.timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
       .andThen(renderBoost(state.player.boost))
+      .andThen(renderFuel(state.player.fuel))
   }
 
 }
