@@ -185,7 +185,7 @@ object Main extends MinartApp {
   def transitionTo(state: AppState): CanvasIO[AppState] = state match {
     case _: AppState.GameState =>
       MidiPlayer.playLooped(Resources.ingameSound).as(state)
-    case AppState.GameOver =>
+    case _: AppState.GameOver =>
       MidiPlayer.playOnce(Resources.gameoverSound).as(state)
     case _ => CanvasIO.pure(state)
   }
@@ -196,7 +196,7 @@ object Main extends MinartApp {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderLogo)
-        newState = if (keyboard.keysPressed(Key.Enter)) AppState.Intro(0.005, initialGameState) else AppState.Menu
+        newState = if (keyboard.keysPressed(Key.Enter)) AppState.Intro(0.005, initialGameState) else state
         _ <- CanvasIO.redraw
       } yield newState
     case AppState.Intro(scale, nextState) =>
@@ -222,7 +222,7 @@ object Main extends MinartApp {
           if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
             if (lastState.level == levels.last) transitionTo(AppState.Menu) // TODO Win state
             else transitionTo(AppState.Intro(0.005, levels.dropWhile(_ != lastState.level).tail.head.initialState)) // TODO clean this up
-          else transitionTo(AppState.GameOver)
+          else transitionTo(AppState.GameOver(lastState.level))
         } else RIO.suspend(AppState.Outro(scale - 0.005, lastState))
         _ <- CanvasIO.redraw
       } yield newState
@@ -235,12 +235,14 @@ object Main extends MinartApp {
         newState = updateGameState(gs, keyboard)
         _ <- CanvasIO.redraw
       } yield newState
-    case AppState.GameOver =>
+    case AppState.GameOver(level) =>
       for {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderGameOver)
-        newState = if (keyboard.isDown(Key.Enter)) AppState.Menu else AppState.GameOver
+        newState <- if (keyboard.isDown(Key.Enter)) transitionTo(AppState.Intro(0.005, level.initialState))
+        else if (keyboard.isDown(Key.Backspace)) transitionTo(AppState.Menu)
+        else CanvasIO.suspend(state)
         _ <- CanvasIO.redraw
       } yield newState
   }

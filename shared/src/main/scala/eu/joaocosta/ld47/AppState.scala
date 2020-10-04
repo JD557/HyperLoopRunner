@@ -28,7 +28,7 @@ object AppState {
       } else None
     }
   }
-  case object GameOver extends AppState
+  case class GameOver(level: Level) extends AppState
 
   object GameState {
     case class Player(x: Double, y: Double, vx: Double, vy: Double, rotation: Double)
