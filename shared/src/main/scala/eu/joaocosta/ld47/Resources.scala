@@ -15,4 +15,5 @@ object Resources {
 
   val ingameSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/ingame-music.mid"))
   val gameoverSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/gameover.mid"))
+  val menuSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/menu.mid"))
 }

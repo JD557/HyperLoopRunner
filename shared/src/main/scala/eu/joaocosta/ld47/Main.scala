@@ -18,7 +18,7 @@ object Main extends MinartApp {
     height = 224,
     scale = 2)
   val canvasManager: CanvasManager = CanvasManager.default(canvasSettings)
-  val initialState: AppState = AppState.Menu
+  val initialState: AppState = AppState.Loading
   val frameRate = FrameRate.fps60
   val terminateWhen = (_: State) => false
 
@@ -119,6 +119,10 @@ object Main extends MinartApp {
   }
 
   def transitionTo(state: AppState): CanvasIO[AppState] = state match {
+    case AppState.Menu =>
+      MidiPlayer.playLooped(Resources.menuSound).as(state)
+    case _: AppState.Intro =>
+      MidiPlayer.stop.as(state)
     case _: AppState.GameState =>
       MidiPlayer.playLooped(Resources.ingameSound).as(state)
     case _: AppState.GameOver =>
@@ -126,13 +130,18 @@ object Main extends MinartApp {
     case _ => CanvasIO.pure(state)
   }
 
+  val initialGameState = Level.levels.head.initialState
+
   val renderFrame = (state: State) => state match {
+    case AppState.Loading =>
+      CanvasIO.clear().andThen(CanvasIO.redraw).andThen(transitionTo(AppState.Menu))
     case AppState.Menu =>
       for {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderLogo)
-        newState = if (keyboard.keysPressed(Key.Enter)) AppState.Intro(0.005, Level.levels.head.initialState) else state
+        newState <- if (keyboard.keysPressed(Key.Enter)) transitionTo(AppState.Intro(0.005, initialGameState))
+        else CanvasIO.suspend(state)
         _ <- CanvasIO.redraw
       } yield newState
     case AppState.Intro(scale, nextState) =>
@@ -157,7 +166,7 @@ object Main extends MinartApp {
         newState <- if (scale <= 0.0) {
           if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
             if (lastState.level == Level.levels.last) transitionTo(AppState.Menu)
-            else transitionTo(AppState.Intro(0.005, Level.levels.dropWhile(_ != lastState.level).tail.head.initialState))
+            else RIO.suspend(AppState.Intro(0.005, Level.levels.dropWhile(_ != lastState.level).tail.head.initialState))
           else transitionTo(AppState.GameOver(lastState.level))
         } else RIO.suspend(AppState.Outro(scale - 0.005, lastState))
         _ <- CanvasIO.redraw

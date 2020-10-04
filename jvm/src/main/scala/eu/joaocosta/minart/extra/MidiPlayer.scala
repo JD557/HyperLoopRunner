@@ -31,4 +31,6 @@ object MidiPlayer {
     sequencer.setSequence(sequence)
     sequencer.start()
   }
+
+  val stop: RIO[Any, Unit] = RIO.suspend(sequencer.stop())
 }
