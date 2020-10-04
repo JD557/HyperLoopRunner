@@ -24,6 +24,16 @@ object Main extends MinartApp {
 
   val levels = List(
     Level(
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("leveltut-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("leveltut-col.ppm")).get,
+      startPosition = (512, 128),
+      riftWaypoints = List(
+        (512, 524),
+        (524, 512),
+        (512, 500),
+        (500, 512)),
+      riftSpeed = 0.1),
+    Level(
       track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-map.ppm")).get,
       collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-col.ppm")).get,
       startPosition = (920, 580),
@@ -72,7 +82,7 @@ object Main extends MinartApp {
         (524, 512),
         (512, 500),
         (500, 512)),
-      riftSpeed = 0.1)).drop(3)
+      riftSpeed = 0.1))
 
   val initialGameState = levels.head.initialState
 
