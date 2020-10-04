@@ -12,4 +12,7 @@ object Resources {
   val character = Image.loadPpmImage(resourceLoader.loadResource("char.ppm"))
   val jets = Image.loadPpmImage(resourceLoader.loadResource("jets.ppm"))
   val timeRift = Image.loadPpmImage(resourceLoader.loadResource("timerift.ppm"))
+
+  val ingameSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/ingame-music.mid"))
+  val gameoverSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/gameover.mid"))
 }
