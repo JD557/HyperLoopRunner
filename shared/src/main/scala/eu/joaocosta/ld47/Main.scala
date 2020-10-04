@@ -25,7 +25,9 @@ object Main extends MinartApp {
   val tau = 2 * math.Pi
 
   def updatePlayer(level: Level, player: AppState.GameState.Player, keyboardInput: KeyboardInput): AppState.GameState.Player = {
-    val topSpeed = 10.0
+    val boosting = player.boost > 0.0 && keyboardInput.isDown(Key.Space)
+    val topSpeed = if (boosting) 20.0 else 10.0
+    val newBoost = if (boosting) math.max(player.boost - 0.005, 0.0) else player.boost
     val maxSpeed = level.collisionMap.getPixel(player.x.toInt, player.y.toInt).map(_.r / 255.0 * topSpeed).getOrElse(topSpeed)
     val newRot =
       if (keyboardInput.isDown(Key.Left)) player.rotation - 0.05
@@ -60,19 +62,22 @@ object Main extends MinartApp {
         y = player.y - newSpeedY,
         vx = -newSpeedX,
         vy = -newSpeedY,
-        rotation = normalizedRot)
+        rotation = normalizedRot,
+        boost = newBoost)
     } else if (stopped)
       player.copy(
         vx = 0,
         vy = 0,
-        rotation = normalizedRot)
+        rotation = normalizedRot,
+        boost = newBoost)
     else
       player.copy(
         x = nextX,
         y = nextY,
         vx = newSpeedX,
         vy = newSpeedY,
-        rotation = normalizedRot)
+        rotation = normalizedRot,
+        boost = newBoost)
   }
 
   def updateTimeRift(level: Level, timeRift: AppState.GameState.TimeRift): AppState.GameState.TimeRift = {

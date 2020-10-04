@@ -13,6 +13,9 @@ object Resources {
   val jets = Image.loadPpmImage(resourceLoader.loadResource("jets.ppm"))
   val timeRift = Image.loadPpmImage(resourceLoader.loadResource("timerift.ppm"))
 
+  val boostFull = Image.loadPpmImage(resourceLoader.loadResource("boost-full.ppm"))
+  val boostEmpty = Image.loadPpmImage(resourceLoader.loadResource("boost-empty.ppm"))
+
   val ingameSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/ingame-music.mid"))
   val gameoverSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/gameover.mid"))
   val menuSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/menu.mid"))

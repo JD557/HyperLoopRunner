@@ -17,6 +17,10 @@ object RenderOps {
   val renderJetLow: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 0, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
   val renderJetHigh: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 4, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
 
+  def renderBoost(boostLevel: Double): CanvasIO[Unit] =
+    Resources.boostEmpty.map(_.render(0, 0)).getOrElse(CanvasIO.noop).andThen(
+      Resources.boostFull.map(_.render(0, 0, 0, 0, (64 * boostLevel).toInt, 8)).getOrElse(CanvasIO.noop))
+
   def renderPlayer(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val renderShip =
       if (keyboardInput.isDown(Key.Left)) renderShipLeft
@@ -53,10 +57,11 @@ object RenderOps {
         .andThen(Transformation.Rotate(state.timeRift.rotation))
         .andThen(Transformation.Translate(state.timeRift.x, state.timeRift.y))
         .andThen(mapTransform)
-    RenderOps.renderBackground
-      .andThen(RenderOps.renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))
-      .andThen(RenderOps.renderPlayer(keyboardInput))
-      .andThen(RenderOps.renderTransformed(Resources.timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
+    renderBackground
+      .andThen(renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))
+      .andThen(renderPlayer(keyboardInput))
+      .andThen(renderTransformed(Resources.timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
+      .andThen(renderBoost(state.player.boost))
   }
 
 }
