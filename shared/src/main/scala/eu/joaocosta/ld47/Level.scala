@@ -23,3 +23,67 @@ case class Level(
       currentWaypoint = 0))
 }
 
+object Level {
+  val levels = List(
+    Level(
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("leveltut-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("leveltut-col.ppm")).get,
+      startPosition = (512, 128),
+      riftWaypoints = List(
+        (512, 524),
+        (524, 512),
+        (512, 500),
+        (500, 512)),
+      riftSpeed = 0.1),
+    Level(
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-col.ppm")).get,
+      startPosition = (920, 580),
+      riftWaypoints = List(
+        (635, 750),
+        (920, 750),
+        (920, 84),
+        (75, 84),
+        (75, 930)),
+      riftSpeed = 2.5),
+    Level(
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level2-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level2-col.ppm")).get,
+      startPosition = (75, 660),
+      riftWaypoints = List(
+        (75, 920),
+        (75, 490),
+        (125, 325),
+        (195, 225),
+        (370, 115),
+        (534, 97),
+        (935, 410),
+        (935, 730)),
+      riftSpeed = 3),
+    Level(
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level3-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level3-col.ppm")).get,
+      startPosition = (75, 550),
+      riftWaypoints = List(
+        (75, 850),
+        (115, 130),
+        (935, 130),
+        (895, 515),
+        (640, 340),
+        (515, 725),
+        (950, 725),
+        (950, 935),
+        (75, 935)),
+      riftSpeed = 3.5),
+    Level(
+      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("levelboss-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("levelboss-col.ppm")).get,
+      startPosition = (512, 768),
+      riftWaypoints = List(
+        (512, 524),
+        (524, 512),
+        (512, 500),
+        (500, 512)),
+      riftSpeed = 0.1))
+}
+
