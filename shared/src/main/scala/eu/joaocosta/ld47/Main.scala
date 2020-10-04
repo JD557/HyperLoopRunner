@@ -79,7 +79,7 @@ object Main extends MinartApp {
         vy = newSpeedY,
         rotation = normalizedRot,
         boost = newBoost,
-        fuel = player.fuel - 0.00015)
+        fuel = player.fuel - 0.0001)
   }
 
   def updateTimeRift(level: Level, timeRift: AppState.GameState.TimeRift): AppState.GameState.TimeRift = {
