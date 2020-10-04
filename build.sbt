@@ -10,8 +10,8 @@ lazy val ld47 =
   .settings(Seq(
     scalaVersion := "2.13.3",
     libraryDependencies ++= List(
-      "eu.joaocosta"                 %%% "minart-core"   % "0.1.6-SNAPSHOT",
-      "eu.joaocosta"                 %%% "minart-pure"   % "0.1.6-SNAPSHOT"
+      "eu.joaocosta"                 %%% "minart-core"   % "0.1.6",
+      "eu.joaocosta"                 %%% "minart-pure"   % "0.1.6"
     )
   ))
   .jsSettings(Seq(
