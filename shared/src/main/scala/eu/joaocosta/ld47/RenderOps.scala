@@ -16,6 +16,8 @@ object RenderOps {
   val renderShipRight: CanvasIO[Unit] = Resources.character.map(_.render(128 - 8, 112 - 8, 32, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
   val renderJetLow: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 0, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
   val renderJetHigh: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 4, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderJetBoostLow: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 8, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderJetBoostHigh: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 12, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
 
   def renderBoost(boostLevel: Double): CanvasIO[Unit] =
     Resources.boostEmpty.map(_.render(0, 0)).getOrElse(CanvasIO.noop).andThen(
@@ -31,7 +33,11 @@ object RenderOps {
       else if (keyboardInput.isDown(Key.Right)) renderShipRight
       else renderShipBase
     val renderJets: CanvasIO[Unit] =
-      if (keyboardInput.isDown(Key.Up)) CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetHigh else renderJetLow)
+      if (keyboardInput.isDown(Key.Up))
+        if (keyboardInput.isDown(Key.Space))
+          CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetBoostHigh else renderJetBoostLow)
+        else
+          CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetHigh else renderJetLow)
       else CanvasIO.noop
     renderJets.andThen(renderShip)
   }
