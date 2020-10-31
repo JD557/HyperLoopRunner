@@ -19,7 +19,7 @@ object Resources {
   val fuelFull = Image.loadPpmImage(resourceLoader.loadResource("fuel-full.ppm"))
   val fuelEmpty = Image.loadPpmImage(resourceLoader.loadResource("fuel-empty.ppm"))
 
-  val ingameSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/ingame-music.mid"))
-  val gameoverSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/gameover.mid"))
-  val menuSound = MidiPlayer.loadSequence(resourceLoader.getClass.getResourceAsStream("/menu.mid"))
+  val ingameSound = MidiPlayer.loadSequence("ingame-music.mid")
+  val gameoverSound = MidiPlayer.loadSequence("gameover.mid")
+  val menuSound = MidiPlayer.loadSequence("menu.mid")
 }

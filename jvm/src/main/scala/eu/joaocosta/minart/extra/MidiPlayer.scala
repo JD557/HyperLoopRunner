@@ -14,7 +14,8 @@ object MidiPlayer {
     seq
   }
 
-  def loadSequence(is: InputStream): Sequence = {
+  def loadSequence(path: String): Sequence = {
+    val is = this.getClass.getResourceAsStream("/" + path)
     MidiSystem.getSequence(is);
   }
 
