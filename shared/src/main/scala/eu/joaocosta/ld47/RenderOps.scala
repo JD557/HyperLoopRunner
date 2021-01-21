@@ -42,18 +42,17 @@ object RenderOps {
     renderJets.andThen(renderShip)
   }
 
-  private val allPixels = for {
-    y <- 0 until 224
-    x <- 0 until 256
-  } yield (x, y)
+  private val rows = (0 until 224)
+  private val columns = (0 until 256)
 
   def renderTransformed(image: Image, transform: Transformation, colorMask: Option[Color] = None) = CanvasIO.accessCanvas { canvas =>
-    allPixels.foreach {
-      case (x, y) =>
+    rows.foreach { y =>
+      columns.foreach { x =>
         val (ix, iy) = transform(x, y)
         image.getPixel(ix.toInt, iy.toInt).foreach { color =>
           if (!colorMask.contains(color)) canvas.putPixel(x, y, color)
         }
+      }
     }
   }
 
@@ -67,12 +66,13 @@ object RenderOps {
         .andThen(Transformation.Rotate(state.timeRift.rotation))
         .andThen(Transformation.Translate(state.timeRift.x, state.timeRift.y))
         .andThen(mapTransform)
-    renderBackground
-      .andThen(renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))))
-      .andThen(renderPlayer(keyboardInput))
-      .andThen(renderTransformed(Resources.timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))))
-      .andThen(renderBoost(state.player.boost))
-      .andThen(renderFuel(state.player.fuel))
+    CanvasIO.sequence_(List(
+      renderBackground,
+      renderTransformed(state.level.track, mapTransform, Some(Color(0, 0, 0))),
+      renderPlayer(keyboardInput),
+      renderTransformed(Resources.timeRift.get, timeRiftTransform, Some(Color(255, 0, 255))),
+      renderBoost(state.player.boost),
+      renderFuel(state.player.fuel)))
   }
 
 }
