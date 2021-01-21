@@ -5,9 +5,9 @@ import eu.joaocosta.minart.extra._
 case class Level(
   track: Image,
   collisionMap: Image,
-  startPosition: (Double, Double),
-  riftWaypoints: List[(Double, Double)],
-  riftSpeed: Double) {
+  startPosition: (Float, Float),
+  riftWaypoints: List[(Float, Float)],
+  riftSpeed: Float) {
   def initialState = AppState.GameState(
     level = this,
     player = AppState.GameState.Player(
@@ -15,13 +15,13 @@ case class Level(
       y = startPosition._2,
       vx = 0,
       vy = 0,
-      rotation = 0.0,
-      boost = 1.0,
-      fuel = 1.0),
+      rotation = 0.0f,
+      boost = 1.0f,
+      fuel = 1.0f),
     timeRift = AppState.GameState.TimeRift(
       x = riftWaypoints.head._1,
       y = riftWaypoints.head._2,
-      rotation = 0.0,
+      rotation = 0,
       currentWaypoint = 0))
 }
 
@@ -36,7 +36,7 @@ object Level {
         (524, 512),
         (512, 500),
         (500, 512)),
-      riftSpeed = 0.1),
+      riftSpeed = 0.1f),
     Level(
       track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-map.ppm")).get,
       collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level1-col.ppm")).get,
@@ -51,7 +51,7 @@ object Level {
         (75, 150),
         (75, 880),
         (110, 960)),
-      riftSpeed = 2.7),
+      riftSpeed = 2.7f),
     Level(
       track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level2-map.ppm")).get,
       collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level2-col.ppm")).get,
@@ -68,7 +68,7 @@ object Level {
         (900, 730),
         (640, 730),
         (160, 920)),
-      riftSpeed = 3.5),
+      riftSpeed = 3.5f),
     Level(
       track = Image.loadPpmImage(Resources.resourceLoader.loadResource("level3-map.ppm")).get,
       collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("level3-col.ppm")).get,
@@ -88,7 +88,7 @@ object Level {
         (950, 820),
         (910, 935),
         (75, 935)),
-      riftSpeed = 4.0),
+      riftSpeed = 4.0f),
     Level(
       track = Image.loadPpmImage(Resources.resourceLoader.loadResource("levelboss-map.ppm")).get,
       collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("levelboss-col.ppm")).get,
@@ -98,6 +98,6 @@ object Level {
         (524, 512),
         (512, 500),
         (500, 512)),
-      riftSpeed = 0.1))
+      riftSpeed = 0.1f))
 }
 

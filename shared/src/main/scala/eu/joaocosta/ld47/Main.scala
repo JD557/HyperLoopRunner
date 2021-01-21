@@ -3,6 +3,7 @@ package eu.joaocosta.ld47
 import eu.joaocosta.minart.backend.defaults._
 import eu.joaocosta.minart.core.KeyboardInput.Key
 import eu.joaocosta.minart.core._
+import eu.joaocosta.minart.pure.backend._
 import eu.joaocosta.minart.pure._
 import eu.joaocosta.minart.extra._
 
@@ -12,7 +13,7 @@ import scala.concurrent.duration._
 object Main extends MinartApp {
 
   type State = AppState
-  val renderLoop = RenderLoop.default()
+  val renderLoop = PureRenderLoop.default()
   val canvasSettings = Canvas.Settings(
     width = 256,
     height = 224,
