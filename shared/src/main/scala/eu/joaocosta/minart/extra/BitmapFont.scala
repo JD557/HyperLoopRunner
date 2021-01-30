@@ -9,7 +9,7 @@ case class BitmapFont(
   charsPerLine: Int,
   charWidth: Int,
   charHeight: Int,
-  startingChar: Int) {
+  startingChar: Char) {
   def renderChar(char: Char, x: Int, y: Int): CanvasIO[Unit] = {
     val offset = char - startingChar
     if (offset >= 0 && offset < (255 - startingChar)) {

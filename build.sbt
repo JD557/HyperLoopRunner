@@ -10,8 +10,8 @@ lazy val ld47 =
   .settings(Seq(
     scalaVersion := "2.13.4",
     libraryDependencies ++= List(
-      "eu.joaocosta"                 %%% "minart-core"   % "0.2.0-SNAPSHOT",
-      "eu.joaocosta"                 %%% "minart-pure"   % "0.2.0-SNAPSHOT"
+      "eu.joaocosta"                 %%% "minart-core"   % "0.2.0",
+      "eu.joaocosta"                 %%% "minart-pure"   % "0.2.0",
     ),
     scalacOptions in Test ++= Seq("-unchecked", "-deprecation")
   ))

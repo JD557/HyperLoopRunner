@@ -5,7 +5,7 @@ import scala.io.Source
 import eu.joaocosta.minart.backend.defaults.DefaultBackend
 
 trait ResourceLoader {
-  def loadResource(name: String): Source
+  def loadResource(name: String): Resource
 }
 
 object ResourceLoader {

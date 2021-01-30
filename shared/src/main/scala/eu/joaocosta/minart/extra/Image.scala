@@ -1,6 +1,6 @@
 package eu.joaocosta.minart.extra
 
-import scala.io.Source
+import scala.io.{ BufferedSource, Source }
 import scala.util.Try
 
 import eu.joaocosta.minart.core._
@@ -92,20 +92,40 @@ case class Image(pixels: Vector[Array[Int]]) {
 object Image {
   val empty: Image = Image(Vector.empty)
 
-  def loadPpmImage(resource: Source): Try[Image] = Try {
+  def loadPpmImage(resource: Resource): Try[Image] = Try {
     println("Loading resource")
-    val it = resource.getLines().filterNot(_.startsWith("#")).flatMap(_.split(" "))
+    val inputStream = resource.asInputStream()
+    val byteIterator: Iterator[Int] = Iterator.continually(inputStream.read()).takeWhile(_ != -1)
+    val charIterator: Iterator[Char] = byteIterator.map(_.toChar)
+    def nextLine(): String = charIterator.takeWhile(_ != '\n').mkString("")
+    val lineIt = Iterator.continually(nextLine())
+    val stringIt = lineIt.filterNot(_.startsWith("#")).flatMap(_.split(" "))
     val builder = Array.newBuilder[Int]
-    require(it.next() == "P3", "Invalid image header")
-    val width = it.next().toInt
-    val height = it.next().toInt
-    require(it.next() == "255", "Invalid color range")
-    println("Reading pixels")
-    (0 until (width * height)).foreach { _ =>
-      val color = Color(it.next().toInt, it.next().toInt, it.next().toInt).argb
-      builder += color
+    val format = stringIt.next()
+    val width = stringIt.next().toInt
+    val height = stringIt.next().toInt
+    require(stringIt.next() == "255", "Invalid color range")
+    format match {
+      case "P3" =>
+        val intIterator = stringIt.map(_.toInt)
+        println("Reading pixels...")
+        (0 until (width * height)).foreach { _ =>
+          val color = Color(intIterator.next(), intIterator.next(), intIterator.next()).argb
+          builder += color
+        }
+        inputStream.close()
+      case "P6" =>
+        val intIterator = byteIterator
+        println("Reading pixels...")
+        (0 until (width * height)).foreach { _ =>
+          val color = Color(intIterator.next(), intIterator.next(), intIterator.next()).argb
+          builder += color
+        }
+        inputStream.close()
+      case fmt =>
+        inputStream.close()
+        throw new Exception("Invalid pixel format: " + fmt)
     }
-    resource.close()
     println("Formatting")
     val pixels = builder.result().sliding(width, width).map(_.toArray).toVector
     println("Done")

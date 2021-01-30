@@ -128,13 +128,13 @@ object Main extends MinartApp {
 
   def transitionTo(state: AppState): CanvasIO[AppState] = state match {
     case AppState.Menu =>
-      MidiPlayer.playLooped(Resources.menuSound).as(state)
+      Resources.midiPlayer.playLooped(Resources.menuSound).as(state)
     case _: AppState.Intro =>
-      MidiPlayer.stop.as(state)
+      Resources.midiPlayer.stop.as(state)
     case _: AppState.GameState =>
-      MidiPlayer.playLooped(Resources.ingameSound).as(state)
+      Resources.midiPlayer.playLooped(Resources.ingameSound).as(state)
     case _: AppState.GameOver =>
-      MidiPlayer.playOnce(Resources.gameoverSound).as(state)
+      Resources.midiPlayer.playOnce(Resources.gameoverSound).as(state)
     case _ => CanvasIO.pure(state)
   }
 
@@ -148,11 +148,11 @@ object Main extends MinartApp {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderLogo)
-        newState <- if (keyboard.keysPressed(Key.Enter)) transitionTo(AppState.Intro(0.005, initialGameState))
+        newState <- if (keyboard.keysPressed(Key.Enter)) transitionTo(AppState.Intro(0.005, initialGameState, true))
         else CanvasIO.suspend(state)
         _ <- CanvasIO.redraw
       } yield newState
-    case AppState.Intro(scale, nextState) =>
+    case AppState.Intro(scale, nextState, noSound) =>
       for {
         _ <- CanvasIO.clear()
         transform = Transformation.Translate(-nextState.player.x, -nextState.player.y)
@@ -160,7 +160,9 @@ object Main extends MinartApp {
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(nextState.level.track, transform, Some(Color(0, 0, 0))))
-        newState <- if (scale >= 1.0) transitionTo(nextState) else CanvasIO.suspend(AppState.Intro(scale + 0.005, nextState))
+        newState <- if (scale < 1.0) CanvasIO.suspend(AppState.Intro(scale + 0.005, nextState, noSound))
+        else if (noSound) transitionTo(nextState)
+        else CanvasIO.suspend(nextState)
         _ <- CanvasIO.redraw
       } yield newState
     case AppState.Outro(scale, lastState) =>
@@ -174,7 +176,7 @@ object Main extends MinartApp {
         newState <- if (scale <= 0.0) {
           if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
             if (lastState.level == Level.levels.last) transitionTo(AppState.Menu)
-            else RIO.suspend(AppState.Intro(0.005, Level.levels.dropWhile(_ != lastState.level).tail.head.initialState))
+            else RIO.suspend(AppState.Intro(0.005, Level.levels.dropWhile(_ != lastState.level).tail.head.initialState, noSound = false))
           else transitionTo(AppState.GameOver(lastState.level))
         } else RIO.suspend(AppState.Outro(scale - 0.005, lastState))
         _ <- CanvasIO.redraw
@@ -193,7 +195,7 @@ object Main extends MinartApp {
         keyboard <- CanvasIO.getKeyboardInput
         _ <- CanvasIO.clear()
         _ <- RenderOps.renderBackground.andThen(RenderOps.renderGameOver)
-        newState <- if (keyboard.isDown(Key.Enter)) transitionTo(AppState.Intro(0.005, level.initialState))
+        newState <- if (keyboard.isDown(Key.Enter)) transitionTo(AppState.Intro(0.005, level.initialState, noSound = true))
         else if (keyboard.isDown(Key.Backspace)) transitionTo(AppState.Menu)
         else CanvasIO.suspend(state)
         _ <- CanvasIO.redraw

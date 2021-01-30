@@ -4,7 +4,7 @@ sealed trait AppState
 object AppState {
   case object Loading extends AppState
   case object Menu extends AppState
-  case class Intro(scale: Double, nextState: GameState) extends AppState
+  case class Intro(scale: Double, nextState: GameState, noSound: Boolean) extends AppState
   case class Outro(scale: Double, lastState: GameState) extends AppState
   case class GameState(
     level: Level,
