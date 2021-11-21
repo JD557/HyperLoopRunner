@@ -1,10 +1,11 @@
 package eu.joaocosta.ld47
 
 import eu.joaocosta.minart.extra._
+import eu.joaocosta.minart.graphics._
 
 case class Level(
-  track: Image,
-  collisionMap: Image,
+  track: RamSurface,
+  collisionMap: RamSurface,
   startPosition: (Float, Float),
   riftWaypoints: List[(Float, Float)],
   riftSpeed: Float) {

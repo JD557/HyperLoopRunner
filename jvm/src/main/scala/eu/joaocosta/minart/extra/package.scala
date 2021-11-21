@@ -7,8 +7,6 @@ import scala.util.Try
 import eu.joaocosta.minart.backend.defaults.DefaultBackend
 
 package object extra {
-  implicit val jvmPlatform: DefaultBackend[Any, Platform] = DefaultBackend.fromConstant(Platform.JVM)
-
   implicit val jvmResourceLoader: DefaultBackend[Any, ResourceLoader] = (_) => (name: String) => new Resource {
     def path = "./" + name
     def asSource() =

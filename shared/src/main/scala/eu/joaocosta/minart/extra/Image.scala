@@ -3,96 +3,27 @@ package eu.joaocosta.minart.extra
 import scala.io.{ BufferedSource, Source }
 import scala.util.Try
 
-import eu.joaocosta.minart.core._
-import eu.joaocosta.minart.pure._
-
-case class Image(pixels: Vector[Array[Int]]) {
-
-  val width = pixels.headOption.map(_.size).getOrElse(0)
-  val height = pixels.size
-
-  private[this] val lines = (0 until height)
-  private[this] val columns = (0 until width)
-
-  def getPixel(x: Int, y: Int): Option[Color] = {
-    if (x < 0 || y < 0 || x >= width || y >= height) None
-    else Some(Color.fromRGB(pixels(y)(x)))
-  }
-
-  def renderUnsafe(canvas: Canvas, x: Int, y: Int, mask: Option[Color]): Unit =
-    for {
-      iy <- lines
-      ix <- columns
-      if (x >= 0 && y >= 0)
-    } {
-      val pixel = Color.fromRGB(pixels(iy)(ix))
-      if (!mask.contains(pixel)) canvas.putPixel(x + ix, y + iy, pixel)
-    }
-
-  def renderUnsafe(canvas: Canvas, x: Int, y: Int): Unit = renderUnsafe(canvas, x, y, None)
-
-  def renderUnsafe(canvas: Canvas, x: Int, y: Int, cx: Int, cy: Int, cw: Int, ch: Int, mask: Option[Color]): Unit =
-    if (x >= 0 && y >= 0) {
-      for {
-        iy <- lines
-        if iy >= cy && iy < cy + ch
-        ix <- columns
-        if ix >= cx && ix < cx + cw
-      } {
-        val pixel = Color.fromRGB(pixels(iy)(ix))
-        if (!mask.contains(pixel)) canvas.putPixel(x + ix - cx, y + iy - cy, pixel)
-      }
-    }
-
-  def renderUnsafe(canvas: Canvas, x: Int, y: Int, cx: Int, cy: Int, cw: Int, ch: Int): Unit =
-    renderUnsafe(canvas, x, y, cx, cy, cw, ch, None)
-
-  def render(x: Int, y: Int, mask: Option[Color]): CanvasIO[Unit] = {
-    if (x >= 0 && y >= 0) {
-      val ops = (for {
-        iy <- lines
-        ix <- columns
-        pixel = Color.fromRGB(pixels(iy)(ix))
-        if !mask.contains(pixel)
-      } yield CanvasIO.putPixel(x + ix, y + iy, pixel))
-      CanvasIO.sequence_(ops)
-    } else CanvasIO.noop
-  }
-
-  def render(x: Int, y: Int): CanvasIO[Unit] = render(x, y, None)
-
-  def render(x: Int, y: Int, cx: Int, cy: Int, cw: Int, ch: Int, mask: Option[Color]): CanvasIO[Unit] = {
-    if (x >= 0 && y >= 0) {
-      val ops = (for {
-        iy <- lines
-        if iy >= cy && iy < cy + ch
-        ix <- columns
-        if ix >= cx && ix < cx + cw
-        pixel = Color.fromRGB(pixels(iy)(ix))
-        if !mask.contains(pixel)
-      } yield CanvasIO.putPixel(x + ix - cx, y + iy - cy, pixel))
-      CanvasIO.sequence_(ops)
-    } else CanvasIO.noop
-  }
-
-  def render(x: Int, y: Int, cx: Int, cy: Int, cw: Int, ch: Int): CanvasIO[Unit] =
-    render(x, y, cx, cy, cw, ch, None)
-
-  lazy val invert =
-    Image(pixels.map(_.map { rc =>
-      val c = Color.fromRGB(rc)
-      Color(255 - c.r, 255 - c.g, 255 - c.b).argb
-    }))
-
-  lazy val flipH = Image(pixels.map(_.reverse))
-
-  lazy val flipV = Image(pixels.reverse)
-}
+import eu.joaocosta.minart.graphics._
+import eu.joaocosta.minart.graphics.pure._
 
 object Image {
-  val empty: Image = Image(Vector.empty)
 
-  def loadPpmImage(resource: Resource): Try[Image] = Try {
+  def invert(surface: RamSurface): RamSurface =
+    new RamSurface(
+      surface.data.map(_.map { c =>
+        Color(255 - c.r, 255 - c.g, 255 - c.b)
+      }))
+
+  def flipH(surface: RamSurface): RamSurface =
+    new RamSurface(surface.data.map(_.reverse))
+
+  def flipV(surface: RamSurface): RamSurface =
+    new RamSurface(surface.data.reverse)
+
+  def transpose(surface: RamSurface): RamSurface =
+    new RamSurface(surface.data.transpose.map(_.toArray))
+
+  def loadPpmImage(resource: Resource): Try[RamSurface] = Try {
     println("Loading resource")
     val inputStream = resource.asInputStream()
     val byteIterator: Iterator[Int] = Iterator.continually(inputStream.read()).takeWhile(_ != -1)
@@ -127,8 +58,57 @@ object Image {
         throw new Exception("Invalid pixel format: " + fmt)
     }
     println("Formatting")
-    val pixels = builder.result().sliding(width, width).map(_.toArray).toVector
+    val pixels = builder.result().sliding(width, width).map(_.map(Color.fromRGB).toArray).toVector
     println("Done")
-    Image(pixels)
+    new RamSurface(pixels)
+  }
+
+  def loadBmpImage(resource: Resource): Try[RamSurface] = Try {
+    println("Loading resource")
+    val inputStream = resource.asInputStream()
+    val byteIterator: Iterator[Int] = Iterator.continually(inputStream.read()).takeWhile(_ != -1)
+    val builder = Array.newBuilder[Int]
+    def readNumber(bytes: Int) =
+      byteIterator.take(bytes).zipWithIndex.map { case (num, idx) => num.toInt << (idx * 8) }.sum
+    def discardBytes(bytes: Int) =
+      byteIterator.take(bytes).foldLeft(())((_, _) => ())
+
+    val formatString = byteIterator.take(2).map(_.toChar).mkString
+    require(formatString == "BM", s"Invalid file format ($formatString): Only windows BMPs are supported")
+    val size = readNumber(4)
+    readNumber(4) // Reserved
+    val offset = readNumber(4)
+    val dibHeaderSize = readNumber(4)
+    require(dibHeaderSize == 40, s"Unsupported DIB Header with size $dibHeaderSize")
+    val width = readNumber(4)
+    val height = readNumber(4)
+    val colorPlanes = readNumber(2)
+    require(colorPlanes == 1, s"Invalid number of color planes ($colorPlanes)")
+    val bitsPerPixel = readNumber(2)
+    val hasAlpha = bitsPerPixel == 32
+    require(bitsPerPixel == 24 || bitsPerPixel == 32, s"Invalid bit depth ($bitsPerPixel): Only 24bit and 32bit BMPs are supported")
+    val compressionMethod = readNumber(4)
+    require(compressionMethod == 0, "Unsupported compression")
+    discardBytes(5 * 4) // Irrelevant header data
+    val rowSize = 4 * ((bitsPerPixel * width) + 31) / 32
+    val skipBytes = rowSize - (bitsPerPixel * width)
+    discardBytes(offset - 14 - 40) // Skip to the offset
+    println("Reading pixels...")
+    (0 until height).foreach { _ =>
+      (0 until width).foreach { _ =>
+        val b = byteIterator.next()
+        val g = byteIterator.next()
+        val r = byteIterator.next()
+        if (hasAlpha) byteIterator.next()
+        val color = Color(r, g, b).argb
+        builder += color
+      }
+      discardBytes(skipBytes)
+    }
+    inputStream.close()
+    println("Formatting...")
+    val pixels = builder.result().sliding(width, width).map(_.map(Color.fromRGB).toArray).toVector.reverse
+    println("Done")
+    new RamSurface(pixels)
   }
 }

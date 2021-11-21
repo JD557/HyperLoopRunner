@@ -1,7 +1,7 @@
 package eu.joaocosta.minart.extra
 
 import eu.joaocosta.minart.backend.defaults.DefaultBackend
-import eu.joaocosta.minart.pure.RIO
+import eu.joaocosta.minart.runtime.pure.RIO
 
 trait SoundPlayer {
   type AudioResource

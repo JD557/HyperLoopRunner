@@ -1,28 +1,30 @@
 package eu.joaocosta.minart.extra
 
-import eu.joaocosta.minart.core._
-import eu.joaocosta.minart.pure._
+import eu.joaocosta.minart.graphics.Color
+import eu.joaocosta.minart.graphics.RamSurface
+import eu.joaocosta.minart.graphics.pure._
 
 case class BitmapFont(
-  bitmap: Image,
-  mask: Option[Color],
+  bitmap: RamSurface,
+  mask: Color,
   charsPerLine: Int,
   charWidth: Int,
   charHeight: Int,
   startingChar: Char) {
+
+  private val maxOffest = 255 - startingChar
   def renderChar(char: Char, x: Int, y: Int): CanvasIO[Unit] = {
     val offset = char - startingChar
-    if (offset >= 0 && offset < (255 - startingChar)) {
+    if (offset >= 0 && offset < maxOffest) {
       val offsetX = offset % charsPerLine
       val offsetY = offset / charsPerLine
-      bitmap.render(
+      CanvasIO.blitWithMask(bitmap, mask)(
         x,
         y,
         offsetX * charWidth,
         offsetY * charHeight,
         charWidth,
-        charHeight,
-        mask)
+        charHeight)
     } else CanvasIO.noop
   }
 
@@ -31,16 +33,5 @@ case class BitmapFont(
     else renderChar(str.head, x, y).andThen(renderText(str.tail, x + charWidth, y))
 
   lazy val invert: BitmapFont =
-    copy(bitmap = bitmap.invert, mask = mask.map(c => Color(255 - c.r, 255 - c.b, 255 - c.g)))
-}
-
-object BitmapFont {
-  val empty: BitmapFont =
-    BitmapFont(
-      Image.empty,
-      None,
-      0,
-      0,
-      0,
-      255)
+    copy(bitmap = Image.invert(bitmap), mask = Color(255 - mask.r, 255 - mask.b, 255 - mask.g))
 }

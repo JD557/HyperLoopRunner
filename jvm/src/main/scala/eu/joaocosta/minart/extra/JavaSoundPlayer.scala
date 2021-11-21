@@ -3,7 +3,7 @@ package eu.joaocosta.minart.extra
 import java.io.{ BufferedInputStream, InputStream }
 import javax.sound.sampled.{ AudioSystem, Clip }
 
-import eu.joaocosta.minart.pure._
+import eu.joaocosta.minart.runtime.pure.RIO
 
 object JavaSoundPlayer extends SoundPlayer {
 
