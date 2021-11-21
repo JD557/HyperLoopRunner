@@ -10,17 +10,17 @@ import eu.joaocosta.minart.input.KeyboardInput.Key
 import eu.joaocosta.minart.runtime._
 
 object RenderOps {
-  val renderLogo: CanvasIO[Unit] = Resources.logo.map { surface =>
+  lazy val renderLogo: CanvasIO[Unit] = Resources.logo.map { surface =>
     CanvasIO.blitWithMask(surface, Color(0, 0, 0))(0, 0)
   }.getOrElse(CanvasIO.noop)
-  val renderGameOver: CanvasIO[Unit] = Resources.gameOver.map { surface =>
+  lazy val renderGameOver: CanvasIO[Unit] = Resources.gameOver.map { surface =>
     CanvasIO.blitWithMask(surface, Color(0, 0, 0))(16, 96)
   }.getOrElse(CanvasIO.noop)
-  val renderBackground: CanvasIO[Unit] = Resources.background.map { surface =>
+  lazy val renderBackground: CanvasIO[Unit] = Resources.background.map { surface =>
     CanvasIO.blit(surface)(0, 0)
   }.getOrElse(CanvasIO.noop)
 
-  val (renderShipLeft, renderShipBase, renderShipRight) = Resources.character.map { surface =>
+  lazy val (renderShipLeft, renderShipBase, renderShipRight) = Resources.character.map { surface =>
     val render = CanvasIO.blitWithMask(surface, Color(255, 255, 255)) _
     (
       render(128 - 8, 112 - 8, 0, 0, 16, 16),

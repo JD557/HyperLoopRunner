@@ -19,9 +19,10 @@ object Main extends MinartApp {
   val canvasSettings = Canvas.Settings(
     width = 256,
     height = 224,
-    scale = 2)
+    scale = 2,
+    clearColor = Color(0, 0, 0))
   val canvasManager: CanvasManager = CanvasManager()
-  val initialState: AppState = AppState.Loading
+  val initialState: AppState = AppState.Loading(0, Resources.allResources)
   val frameRate = LoopFrequency.hz60
   val terminateWhen = (_: State) => false
 
@@ -140,11 +141,20 @@ object Main extends MinartApp {
     case _ => CanvasIO.pure(state)
   }
 
-  val initialGameState = Level.levels.head.initialState
+  lazy val initialGameState = Level.levels.head.initialState
 
   val renderFrame = (state: State) => state match {
-    case AppState.Loading =>
-      CanvasIO.clear().andThen(CanvasIO.redraw).andThen(transitionTo(AppState.Menu))
+    case AppState.Loading(_, Nil) =>
+      transitionTo(AppState.Menu)
+    case AppState.Loading(loaded, loadNext :: remaining) => for {
+      _ <- CanvasIO.clear()
+      _ <- Geom.renderRect(10, 224 - 20, 256 - 10, 224 - 10, Color(255, 255, 255))
+      _ <- Geom.renderRect(10 + 2, 224 - 20 + 2, 256 - 10 - 2, 224 - 10 - 2, Color(0, 0, 0))
+      percentage = loaded.toDouble / (loaded + remaining.size)
+      _ <- Geom.renderRect(10 + 3, 224 - 20 + 3, (percentage * (256 - 10 - 3)).toInt, 224 - 10 - 3, Color(255, 255, 255))
+      _ <- CanvasIO.redraw
+      _ = loadNext()
+    } yield AppState.Loading(loaded + 1, remaining)
     case AppState.Menu =>
       for {
         keyboard <- CanvasIO.getKeyboardInput

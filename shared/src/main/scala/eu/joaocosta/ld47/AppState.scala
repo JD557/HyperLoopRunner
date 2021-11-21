@@ -2,7 +2,7 @@ package eu.joaocosta.ld47
 
 sealed trait AppState
 object AppState {
-  case object Loading extends AppState
+  case class Loading(loaded: Int, remainingResouces: List[() => Any]) extends AppState
   case object Menu extends AppState
   case class Intro(scale: Double, nextState: GameState, noSound: Boolean) extends AppState
   case class Outro(scale: Double, lastState: GameState) extends AppState
