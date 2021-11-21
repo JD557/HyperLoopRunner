@@ -22,7 +22,7 @@ object Main extends MinartApp {
     scale = 2,
     clearColor = Color(0, 0, 0))
   val canvasManager: CanvasManager = CanvasManager()
-  val initialState: AppState = AppState.Loading(0, Resources.allResources)
+  val initialState: AppState = AppState.Loading(0, (() => initialGameState) :: Resources.allResources)
   val frameRate = LoopFrequency.hz60
   val terminateWhen = (_: State) => false
 
