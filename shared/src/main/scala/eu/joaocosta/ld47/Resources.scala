@@ -1,6 +1,6 @@
 package eu.joaocosta.ld47
 
-import eu.joaocosta.minart.core._
+import eu.joaocosta.minart.runtime._
 import eu.joaocosta.minart.extra._
 
 object Resources {
@@ -20,15 +20,15 @@ object Resources {
   val fuelFull = Image.loadPpmImage(resourceLoader.loadResource("assets/fuel-full.ppm"))
   val fuelEmpty = Image.loadPpmImage(resourceLoader.loadResource("assets/fuel-empty.ppm"))
 
-  val ingameSound = midiPlayer.loadClip(resourceLoader.loadResource(Platform.get match {
+  val ingameSound = midiPlayer.loadClip(resourceLoader.loadResource(Platform() match {
     case Platform.JS => "assets/ingame-music.mp3"
     case _ => "assets/ingame-music.mid"
   }))
-  val gameoverSound = midiPlayer.loadClip(resourceLoader.loadResource(Platform.get match {
+  val gameoverSound = midiPlayer.loadClip(resourceLoader.loadResource(Platform() match {
     case Platform.JS => "assets/gameover.mp3"
     case _ => "assets/gameover.mid"
   }))
-  val menuSound = midiPlayer.loadClip(resourceLoader.loadResource(Platform.get match {
+  val menuSound = midiPlayer.loadClip(resourceLoader.loadResource(Platform() match {
     case Platform.JS => "assets/menu.mp3"
     case _ => "assets/menu.mid"
   }))

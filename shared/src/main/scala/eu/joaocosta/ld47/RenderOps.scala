@@ -2,30 +2,53 @@ package eu.joaocosta.ld47
 
 import scala.util.Random
 
-import eu.joaocosta.minart.core.KeyboardInput.Key
-import eu.joaocosta.minart.core._
 import eu.joaocosta.minart.extra._
-import eu.joaocosta.minart.pure._
+import eu.joaocosta.minart.graphics._
+import eu.joaocosta.minart.graphics.pure._
+import eu.joaocosta.minart.input._
+import eu.joaocosta.minart.input.KeyboardInput.Key
+import eu.joaocosta.minart.runtime._
 
 object RenderOps {
-  val renderLogo: CanvasIO[Unit] = Resources.logo.map(_.render(0, 0, Some(Color(0, 0, 0)))).getOrElse(CanvasIO.noop)
-  val renderGameOver: CanvasIO[Unit] = Resources.gameOver.map(_.render(16, 96, Some(Color(0, 0, 0)))).getOrElse(CanvasIO.noop)
-  val renderBackground: CanvasIO[Unit] = Resources.background.map(_.render(0, 0)).getOrElse(CanvasIO.noop)
-  val renderShipLeft: CanvasIO[Unit] = Resources.character.map(_.render(128 - 8, 112 - 8, 0, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderShipBase: CanvasIO[Unit] = Resources.character.map(_.render(128 - 8, 112 - 8, 16, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderShipRight: CanvasIO[Unit] = Resources.character.map(_.render(128 - 8, 112 - 8, 32, 0, 16, 16, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderJetLow: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 0, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderJetHigh: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 4, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderJetBoostLow: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 8, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
-  val renderJetBoostHigh: CanvasIO[Unit] = Resources.jets.map(_.render(128 - 8, 112 + 8, 0, 12, 16, 4, Some(Color(255, 255, 255)))).getOrElse(CanvasIO.noop)
+  val renderLogo: CanvasIO[Unit] = Resources.logo.map { surface =>
+    CanvasIO.blitWithMask(surface, Color(0, 0, 0))(0, 0)
+  }.getOrElse(CanvasIO.noop)
+  val renderGameOver: CanvasIO[Unit] = Resources.gameOver.map { surface =>
+    CanvasIO.blitWithMask(surface, Color(0, 0, 0))(16, 96)
+  }.getOrElse(CanvasIO.noop)
+  val renderBackground: CanvasIO[Unit] = Resources.background.map { surface =>
+    CanvasIO.blit(surface)(0, 0)
+  }.getOrElse(CanvasIO.noop)
+
+  val (renderShipLeft, renderShipBase, renderShipRight) = Resources.character.map { surface =>
+    val render = CanvasIO.blitWithMask(surface, Color(255, 255, 255)) _
+    (
+      render(128 - 8, 112 - 8, 0, 0, 16, 16),
+      render(128 - 8, 112 - 8, 16, 0, 16, 16),
+      render(128 - 8, 112 - 8, 32, 0, 16, 16))
+  }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
+
+  val (renderJetLow, renderJetHigh, renderJetBoostLow, renderJetBoostHigh) =
+    Resources.jets.map { surface =>
+      val render = CanvasIO.blitWithMask(surface, Color(255, 255, 255)) _
+      (
+        render(128 - 8, 112 + 8, 0, 0, 16, 4),
+        render(128 - 8, 112 + 8, 0, 4, 16, 4),
+        render(128 - 8, 112 + 8, 0, 8, 16, 4),
+        render(128 - 8, 112 + 8, 0, 12, 16, 4))
+    }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
 
   def renderBoost(boostLevel: Double): CanvasIO[Unit] =
-    Resources.boostEmpty.map(_.render(0, 0)).getOrElse(CanvasIO.noop).andThen(
-      Resources.boostFull.map(_.render(0, 0, 0, 0, (64 * boostLevel).toInt, 8)).getOrElse(CanvasIO.noop))
+    (for {
+      boostEmpty <- Resources.boostEmpty
+      boostFull <- Resources.boostFull
+    } yield CanvasIO.blit(boostEmpty)(0, 0).andThen(CanvasIO.blit(boostFull)(0, 0, 0, 0, (64 * boostLevel).toInt, 8))).getOrElse(CanvasIO.noop)
 
   def renderFuel(fuelLevel: Double): CanvasIO[Unit] =
-    Resources.fuelEmpty.map(_.render(0, 8)).getOrElse(CanvasIO.noop).andThen(
-      Resources.fuelFull.map(_.render(0, 8, 0, 0, (64 * fuelLevel).toInt, 8)).getOrElse(CanvasIO.noop))
+    (for {
+      fuelEmpty <- Resources.fuelEmpty
+      fuelFull <- Resources.fuelFull
+    } yield CanvasIO.blit(fuelEmpty)(0, 8).andThen(CanvasIO.blit(fuelFull)(0, 8, 0, 0, (64 * fuelLevel).toInt, 8))).getOrElse(CanvasIO.noop)
 
   def renderPlayer(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val renderShip =
@@ -45,7 +68,7 @@ object RenderOps {
   private val rows = (0 until 224)
   private val columns = (0 until 256)
 
-  def renderTransformed(image: Image, transform: Transformation, colorMask: Option[Color] = None) = CanvasIO.accessCanvas { canvas =>
+  def renderTransformed(image: RamSurface, transform: Transformation, colorMask: Option[Color] = None) = CanvasIO.accessCanvas { canvas =>
     rows.foreach { y =>
       columns.foreach { x =>
         val (ix, iy) = transform(x, y)

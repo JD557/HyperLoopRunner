@@ -10,8 +10,6 @@ import org.scalajs.dom.raw.XMLHttpRequest
 import eu.joaocosta.minart.backend.defaults.DefaultBackend
 
 package object extra {
-  implicit val jsPlatform: DefaultBackend[Any, Platform] = DefaultBackend.fromConstant(Platform.JS)
-
   implicit val jsResourceLoader: DefaultBackend[Any, ResourceLoader] = (_) => (name: String) => new Resource {
     def path = "./" + name
 

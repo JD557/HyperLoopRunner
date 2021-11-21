@@ -6,8 +6,6 @@ import scala.io.Source
 import eu.joaocosta.minart.backend.defaults.DefaultBackend
 
 package object extra {
-  implicit val nativePlatform: DefaultBackend[Any, Platform] = DefaultBackend.fromConstant(Platform.Native)
-
   implicit val nativeResourceLoader: DefaultBackend[Any, ResourceLoader] = DefaultBackend.fromConstant(new ResourceLoader {
     def loadResource(name: String): Resource = new Resource {
       def path = "./" + name

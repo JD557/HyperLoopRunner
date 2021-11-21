@@ -1,11 +1,13 @@
 package eu.joaocosta.ld47
 
 import eu.joaocosta.minart.backend.defaults._
-import eu.joaocosta.minart.core.KeyboardInput.Key
-import eu.joaocosta.minart.core._
-import eu.joaocosta.minart.pure.backend._
-import eu.joaocosta.minart.pure._
 import eu.joaocosta.minart.extra._
+import eu.joaocosta.minart.graphics._
+import eu.joaocosta.minart.graphics.pure._
+import eu.joaocosta.minart.input._
+import eu.joaocosta.minart.input.KeyboardInput.Key
+import eu.joaocosta.minart.runtime._
+import eu.joaocosta.minart.runtime.pure._
 
 import scala.io.Source
 import scala.concurrent.duration._
@@ -13,14 +15,14 @@ import scala.concurrent.duration._
 object Main extends MinartApp {
 
   type State = AppState
-  val renderLoop = PureRenderLoop.default()
+  val loopRunner = LoopRunner()
   val canvasSettings = Canvas.Settings(
     width = 256,
     height = 224,
     scale = 2)
-  val canvasManager: CanvasManager = CanvasManager.default(canvasSettings)
+  val canvasManager: CanvasManager = CanvasManager()
   val initialState: AppState = AppState.Loading
-  val frameRate = FrameRate.fps60
+  val frameRate = LoopFrequency.hz60
   val terminateWhen = (_: State) => false
 
   val tau = 2 * math.Pi
