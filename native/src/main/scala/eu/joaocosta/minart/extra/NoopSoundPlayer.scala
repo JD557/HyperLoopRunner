@@ -1,6 +1,7 @@
 package eu.joaocosta.minart.extra
 
 import eu.joaocosta.minart.runtime.pure.RIO
+import eu.joaocosta.minart.runtime.Resource
 
 // Dummy interface
 object NoopSoundPlayer extends SoundPlayer {

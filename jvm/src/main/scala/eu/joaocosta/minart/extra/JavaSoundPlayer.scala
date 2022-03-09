@@ -4,6 +4,7 @@ import java.io.{ BufferedInputStream, InputStream }
 import javax.sound.sampled.{ AudioSystem, Clip }
 
 import eu.joaocosta.minart.runtime.pure.RIO
+import eu.joaocosta.minart.runtime.Resource
 
 object JavaSoundPlayer extends SoundPlayer {
 
@@ -12,10 +13,13 @@ object JavaSoundPlayer extends SoundPlayer {
   private var currentClip: Option[Clip] = None
 
   def loadClip(resource: Resource): AudioResource = {
-    val is = new BufferedInputStream(resource.asInputStream)
-    val clip = AudioSystem.getClip()
-    clip.open(AudioSystem.getAudioInputStream(is))
-    clip
+    resource.withInputStream { is =>
+      // TODO check if the input stream needs to be copied
+      val bis = new BufferedInputStream(is)
+      val clip = AudioSystem.getClip()
+      clip.open(AudioSystem.getAudioInputStream(bis))
+      clip
+    }.get
   }
 
   def playOnce(clip: AudioResource): RIO[Any, Unit] = RIO.suspend {

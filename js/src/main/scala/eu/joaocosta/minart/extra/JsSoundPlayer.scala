@@ -6,6 +6,7 @@ import org.scalajs.dom
 import org.scalajs.dom.html.Audio
 
 import eu.joaocosta.minart.runtime.pure.RIO
+import eu.joaocosta.minart.runtime.Resource
 
 object JsSoundPlayer extends SoundPlayer {
 

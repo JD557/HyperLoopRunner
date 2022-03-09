@@ -1,7 +1,10 @@
 package eu.joaocosta.ld47
 
 import eu.joaocosta.minart.extra._
+import eu.joaocosta.minart.runtime._
 import eu.joaocosta.minart.graphics._
+import eu.joaocosta.minart.graphics.image._
+import eu.joaocosta.minart.backend.defaults._
 
 case class Level(
   track: RamSurface,
@@ -29,8 +32,8 @@ case class Level(
 object Level {
   val levels = List(
     Level(
-      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/leveltut-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/leveltut-col.ppm")).get,
+      track = Image.loadPpmImage(Resource("assets/leveltut-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resource("assets/leveltut-col.ppm")).get,
       startPosition = (512, 128),
       riftWaypoints = List(
         (512, 524),
@@ -39,8 +42,8 @@ object Level {
         (500, 512)),
       riftSpeed = 0.1f),
     Level(
-      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/level1-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/level1-col.ppm")).get,
+      track = Image.loadPpmImage(Resource("assets/level1-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resource("assets/level1-col.ppm")).get,
       startPosition = (920, 580),
       riftWaypoints = List(
         (635, 750),
@@ -54,8 +57,8 @@ object Level {
         (110, 960)),
       riftSpeed = 2.7f),
     Level(
-      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/level2-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/level2-col.ppm")).get,
+      track = Image.loadPpmImage(Resource("assets/level2-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resource("assets/level2-col.ppm")).get,
       startPosition = (75, 660),
       riftWaypoints = List(
         (75, 920),
@@ -71,8 +74,8 @@ object Level {
         (160, 920)),
       riftSpeed = 3.5f),
     Level(
-      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/level3-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/level3-col.ppm")).get,
+      track = Image.loadPpmImage(Resource("assets/level3-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resource("assets/level3-col.ppm")).get,
       startPosition = (75, 550),
       riftWaypoints = List(
         (75, 850),
@@ -91,8 +94,8 @@ object Level {
         (75, 935)),
       riftSpeed = 4.0f),
     Level(
-      track = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/levelboss-map.ppm")).get,
-      collisionMap = Image.loadPpmImage(Resources.resourceLoader.loadResource("assets/levelboss-col.ppm")).get,
+      track = Image.loadPpmImage(Resource("assets/levelboss-map.ppm")).get,
+      collisionMap = Image.loadPpmImage(Resource("assets/levelboss-col.ppm")).get,
       startPosition = (512, 768),
       riftWaypoints = List(
         (512, 524),
