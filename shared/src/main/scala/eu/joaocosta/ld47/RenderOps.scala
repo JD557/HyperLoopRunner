@@ -21,22 +21,19 @@ object RenderOps {
   }.getOrElse(CanvasIO.noop)
 
   lazy val (renderShipLeft, renderShipBase, renderShipRight) = Resources.character.map { surface =>
-    val render = CanvasIO.blitWithMask(surface, Color(255, 255, 255)) _
     (
-      render(128 - 8, 112 - 8, 0, 0, 16, 16),
-      render(128 - 8, 112 - 8, 16, 0, 16, 16),
-      render(128 - 8, 112 - 8, 32, 0, 16, 16))
+      CanvasIO.blitWithMask(surface.getSprite(0), Color(255, 255, 255))(128 - 8, 112 - 8),
+      CanvasIO.blitWithMask(surface.getSprite(1), Color(255, 255, 255))(128 - 8, 112 - 8),
+      CanvasIO.blitWithMask(surface.getSprite(2), Color(255, 255, 255))(128 - 8, 112 - 8))
   }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
 
-  val (renderJetLow, renderJetHigh, renderJetBoostLow, renderJetBoostHigh) =
-    Resources.jets.map { surface =>
-      val render = CanvasIO.blitWithMask(surface, Color(255, 255, 255)) _
-      (
-        render(128 - 8, 112 + 8, 0, 0, 16, 4),
-        render(128 - 8, 112 + 8, 0, 4, 16, 4),
-        render(128 - 8, 112 + 8, 0, 8, 16, 4),
-        render(128 - 8, 112 + 8, 0, 12, 16, 4))
-    }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
+  lazy val (renderJetLow, renderJetHigh, renderJetBoostLow, renderJetBoostHigh) = Resources.jets.map { surface =>
+    (
+      CanvasIO.blitWithMask(surface.getSprite(0), Color(255, 255, 255))(128 - 8, 112 + 8),
+      CanvasIO.blitWithMask(surface.getSprite(1), Color(255, 255, 255))(128 - 8, 112 + 8),
+      CanvasIO.blitWithMask(surface.getSprite(2), Color(255, 255, 255))(128 - 8, 112 + 8),
+      CanvasIO.blitWithMask(surface.getSprite(3), Color(255, 255, 255))(128 - 8, 112 + 8))
+  }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
 
   def renderBoost(boostLevel: Double): CanvasIO[Unit] =
     (for {

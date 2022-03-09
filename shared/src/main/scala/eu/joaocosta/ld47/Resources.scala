@@ -11,8 +11,10 @@ object Resources {
   lazy val background = Image.loadPpmImage(Resource("assets/bg.ppm"))
   lazy val logo = Image.loadPpmImage(Resource("assets/logo.ppm"))
   lazy val gameOver = Image.loadPpmImage(Resource("assets/gameover.ppm"))
-  lazy val character = Image.loadPpmImage(Resource("assets/char.ppm"))
-  lazy val jets = Image.loadPpmImage(Resource("assets/jets.ppm"))
+  lazy val character = Image.loadPpmImage(Resource("assets/char.ppm")).map(surface =>
+    new SpriteSheet(surface, 16, 16))
+  lazy val jets = Image.loadPpmImage(Resource("assets/jets.ppm")).map(surface =>
+    new SpriteSheet(surface, 16, 4))
   lazy val timeRift = Image.loadPpmImage(Resource("assets/timerift.ppm"))
 
   lazy val boostFull = Image.loadPpmImage(Resource("assets/boost-full.ppm"))
