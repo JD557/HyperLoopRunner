@@ -8,14 +8,15 @@ trait SoundPlayer {
   type AudioResource
 
   def loadClip(resource: Resource): AudioResource
-
-  def playOnce(clip: AudioResource): RIO[Any, Unit]
-
-  def playLooped(clip: AudioResource): RIO[Any, Unit]
-
-  val stop: RIO[Any, Unit]
+  def newChannel(): SoundPlayer.SoundChannel[AudioResource]
 }
 
 object SoundPlayer {
   def default()(implicit d: DefaultBackend[Any, SoundPlayer]): SoundPlayer = d.defaultValue(())
+
+  trait SoundChannel[AudioResource] {
+    def playOnce(clip: AudioResource): RIO[Any, Unit]
+    def playLooped(clip: AudioResource): RIO[Any, Unit]
+    val stop: RIO[Any, Unit]
+  }
 }

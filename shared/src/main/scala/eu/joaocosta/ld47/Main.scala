@@ -131,13 +131,13 @@ object Main extends MinartApp {
 
   def transitionTo(state: AppState): CanvasIO[AppState] = state match {
     case AppState.Menu =>
-      Resources.midiPlayer.playLooped(Resources.menuSound).as(state)
+      Resources.bgSoundChannel.playLooped(Resources.menuSound).as(state)
     case _: AppState.Intro =>
-      Resources.midiPlayer.stop.as(state)
+      Resources.bgSoundChannel.stop.as(state)
     case _: AppState.GameState =>
-      Resources.midiPlayer.playLooped(Resources.ingameSound).as(state)
+      Resources.bgSoundChannel.playLooped(Resources.ingameSound).as(state)
     case _: AppState.GameOver =>
-      Resources.midiPlayer.playOnce(Resources.gameoverSound).as(state)
+      Resources.bgSoundChannel.playOnce(Resources.gameoverSound).as(state)
     case _ => CanvasIO.pure(state)
   }
 
@@ -171,7 +171,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(nextState.level.track, transform, Some(Color(0, 0, 0))))
+        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(nextState.level.track, transform, Color(0, 0, 0)))
         newState <- if (scale < 1.0) CanvasIO.suspend(AppState.Intro(scale + 0.005, nextState, noSound))
         else if (noSound) transitionTo(nextState)
         else CanvasIO.suspend(nextState)
@@ -184,7 +184,7 @@ object Main extends MinartApp {
           .andThen(Transformation.Scale(scale))
           .andThen(Transformation.Rotate(scale * tau))
           .andThen(Transformation.Translate(128, 112))
-        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(lastState.level.track, transform, Some(Color(0, 0, 0))))
+        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(lastState.level.track, transform, Color(0, 0, 0)))
         newState <- if (scale <= 0.0) {
           if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
             if (lastState.level == Level.levels.last) transitionTo(AppState.Menu)

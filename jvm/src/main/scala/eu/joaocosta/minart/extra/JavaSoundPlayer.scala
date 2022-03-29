@@ -10,8 +10,6 @@ object JavaSoundPlayer extends SoundPlayer {
 
   type AudioResource = Clip
 
-  private var currentClip: Option[Clip] = None
-
   def loadClip(resource: Resource): AudioResource = {
     resource.withInputStream { is =>
       // TODO check if the input stream needs to be copied
@@ -22,25 +20,30 @@ object JavaSoundPlayer extends SoundPlayer {
     }.get
   }
 
-  def playOnce(clip: AudioResource): RIO[Any, Unit] = RIO.suspend {
-    currentClip.foreach(_.stop())
-    currentClip = Some(clip)
-    currentClip.foreach { clip =>
-      clip.setMicrosecondPosition(0)
-      clip.loop(0)
-      clip.start()
-    }
-  }
+  def newChannel(): SoundPlayer.SoundChannel[AudioResource] = new SoundPlayer.SoundChannel[AudioResource] {
 
-  def playLooped(clip: AudioResource): RIO[Any, Unit] = RIO.suspend {
-    currentClip.foreach(_.stop())
-    currentClip = Some(clip)
-    currentClip.foreach { clip =>
-      clip.setMicrosecondPosition(0)
-      clip.loop(Clip.LOOP_CONTINUOUSLY)
-      clip.start()
-    }
-  }
+    private var currentClip: Option[Clip] = None
 
-  val stop: RIO[Any, Unit] = RIO.suspend(currentClip.foreach(_.stop()))
+    def playOnce(clip: AudioResource): RIO[Any, Unit] = RIO.suspend {
+      currentClip.foreach(_.stop())
+      currentClip = Some(clip)
+      currentClip.foreach { clip =>
+        clip.setMicrosecondPosition(0)
+        clip.loop(0)
+        clip.start()
+      }
+    }
+
+    def playLooped(clip: AudioResource): RIO[Any, Unit] = RIO.suspend {
+      currentClip.foreach(_.stop())
+      currentClip = Some(clip)
+      currentClip.foreach { clip =>
+        clip.setMicrosecondPosition(0)
+        clip.loop(Clip.LOOP_CONTINUOUSLY)
+        clip.start()
+      }
+    }
+
+    val stop: RIO[Any, Unit] = RIO.suspend(currentClip.foreach(_.stop()))
+  }
 }

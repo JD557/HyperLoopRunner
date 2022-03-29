@@ -10,9 +10,9 @@ object NoopSoundPlayer extends SoundPlayer {
 
   def loadClip(resource: Resource): Unit = ()
 
-  def playOnce(clip: Unit): RIO[Any, Unit] = RIO.noop
-
-  def playLooped(clip: Unit): RIO[Any, Unit] = RIO.noop
-
-  val stop: RIO[Any, Unit] = RIO.noop
+  def newChannel(): SoundPlayer.SoundChannel[AudioResource] = new SoundPlayer.SoundChannel[AudioResource] {
+    def playOnce(clip: Unit): RIO[Any, Unit] = RIO.noop
+    def playLooped(clip: Unit): RIO[Any, Unit] = RIO.noop
+    val stop: RIO[Any, Unit] = RIO.noop
+  }
 }
