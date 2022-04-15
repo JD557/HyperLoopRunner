@@ -2,18 +2,16 @@ import sbtcrossproject.CrossPlugin.autoImport.{ crossProject, CrossType }
 
 name := "Hyper Loop Runner"
 
-version := "1.3"
+version := "1.4"
 
 lazy val ld47 =
   crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("."))
   .settings(Seq(
-    scalaVersion := "2.13.7",
+    scalaVersion := "3.1.2",
     libraryDependencies ++= List(
-      "eu.joaocosta"                 %%% "minart-core"   % "0.3.1",
-      "eu.joaocosta"                 %%% "minart-pure"   % "0.3.1",
-    ),
-    scalacOptions in Test ++= Seq("-unchecked", "-deprecation")
+      "eu.joaocosta" %%% "minart" % "0.4.0",
+    )
   ))
   .jsSettings(Seq(
     scalaJSUseMainModuleInitializer := true

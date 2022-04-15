@@ -1,13 +1,17 @@
 package eu.joaocosta.ld47
 
 sealed trait Transformation {
+  final def applyInt(x: Int, y: Int): (Int, Int) = {
+    val (xxDouble, yyDouble) = apply(x.toDouble, y.toDouble)
+    (xxDouble.toInt, yyDouble.toInt)
+  }
   def apply(x: Double, y: Double): (Double, Double)
-  protected def unsafeApply(res: Transformation.MutRes)
+  def unsafeApply(res: Transformation.MutRes): Unit
   def andThen(that: Transformation) = Transformation.AndThen(this, that)
 }
 object Transformation {
 
-  private class MutRes(var x: Double, var y: Double) {
+  class MutRes(var x: Double, var y: Double) {
     def update(newX: Double, newY: Double): this.type = {
       x = newX
       y = newY
