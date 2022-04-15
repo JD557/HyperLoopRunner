@@ -24,5 +24,5 @@ case class BitmapFont(
     MSurfaceIO.when(str.nonEmpty)(renderChar(str.head, x, y).andThen(renderText(str.tail, x + charWidth, y)))
 
   lazy val invert: BitmapFont =
-    copy(bitmap = Image.invert(bitmap), mask = Color(255 - mask.r, 255 - mask.b, 255 - mask.g))
+    copy(bitmap = bitmap.view.invertColor.toRamSurface(), mask = Color(255 - mask.r, 255 - mask.b, 255 - mask.g))
 }
