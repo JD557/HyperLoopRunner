@@ -64,11 +64,27 @@ object RenderOps {
     renderJets.andThen(renderShip)
   }
 
-  def renderTransformed(image: RamSurface, transform: Transformation, colorMask: Color) = CanvasIO.blit(
+  // Firefox seems to have some performance problems with this.
+  // To be investigated.
+  /*def renderTransformed(image: RamSurface, transform: Transformation, colorMask: Color) = CanvasIO.blit(
     Plane.fromSurfaceWithFallback(image, colorMask)
       .contramap((x, y) => transform.applyInt(x, y))
       .toSurfaceView(256, 224),
-    Some(colorMask))(0, 0)
+    Some(colorMask))(0, 0)*/
+
+  private val rows = (0 until 224)
+  private val columns = (0 until 256)
+
+  def renderTransformed(image: RamSurface, transform: Transformation, colorMask: Color) = CanvasIO.accessCanvas { canvas =>
+    rows.foreach { y =>
+      columns.foreach { x =>
+        val (ix, iy) = transform(x, y)
+        image.getPixel(ix.toInt, iy.toInt).foreach { color =>
+          if (colorMask != color) canvas.putPixel(x, y, color)
+        }
+      }
+    }
+  }
 
   def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val mapTransform =
