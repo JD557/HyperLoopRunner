@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cp ./assets/* ./jvm/src/main/resources/assets/
+cp ./assets/* ./shared/src/main/resources/assets/

@@ -9,20 +9,20 @@ object Resources {
   val soundPlayer = SoundPlayer.default()
   val bgSoundChannel = soundPlayer.newChannel()
 
-  lazy val background = Image.loadPpmImage(Resource("assets/bg.ppm"))
-  lazy val logo = Image.loadPpmImage(Resource("assets/logo.ppm"))
-  lazy val gameOver = Image.loadPpmImage(Resource("assets/gameover.ppm"))
-  lazy val character = Image.loadPpmImage(Resource("assets/char.ppm")).map(surface =>
+  lazy val background = Image.loadQoiImage(Resource("assets/bg.qoi"))
+  lazy val logo = Image.loadQoiImage(Resource("assets/logo.qoi"))
+  lazy val gameOver = Image.loadQoiImage(Resource("assets/gameover.qoi"))
+  lazy val character = Image.loadQoiImage(Resource("assets/char.qoi")).map(surface =>
     new SpriteSheet(surface, 16, 16))
-  lazy val jets = Image.loadPpmImage(Resource("assets/jets.ppm")).map(surface =>
+  lazy val jets = Image.loadQoiImage(Resource("assets/jets.qoi")).map(surface =>
     new SpriteSheet(surface, 16, 4))
-  lazy val timeRift = Image.loadPpmImage(Resource("assets/timerift.ppm"))
+  lazy val timeRift = Image.loadQoiImage(Resource("assets/timerift.qoi"))
 
-  lazy val boostFull = Image.loadPpmImage(Resource("assets/boost-full.ppm"))
-  lazy val boostEmpty = Image.loadPpmImage(Resource("assets/boost-empty.ppm"))
+  lazy val boostFull = Image.loadQoiImage(Resource("assets/boost-full.qoi"))
+  lazy val boostEmpty = Image.loadQoiImage(Resource("assets/boost-empty.qoi"))
 
-  lazy val fuelFull = Image.loadPpmImage(Resource("assets/fuel-full.ppm"))
-  lazy val fuelEmpty = Image.loadPpmImage(Resource("assets/fuel-empty.ppm"))
+  lazy val fuelFull = Image.loadQoiImage(Resource("assets/fuel-full.qoi"))
+  lazy val fuelEmpty = Image.loadQoiImage(Resource("assets/fuel-empty.qoi"))
 
   lazy val ingameSound = soundPlayer.loadClip(Resource(Platform() match {
     case Platform.JS => "assets/ingame-music.mp3"
