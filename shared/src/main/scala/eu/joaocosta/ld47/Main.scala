@@ -12,19 +12,20 @@ import eu.joaocosta.minart.runtime.pure._
 import scala.io.Source
 import scala.concurrent.duration._
 
-object Main extends MinartApp {
+object Main extends MinartApp[AppState, LowLevelCanvas] {
 
-  type State = AppState
   val loopRunner = LoopRunner()
+  val createSubsystem = () => LowLevelCanvas.create()
+
   val canvasSettings = Canvas.Settings(
     width = 256,
     height = 224,
     scale = 2,
     clearColor = Color(0, 0, 0))
-  val canvasManager: CanvasManager = CanvasManager()
+
   val initialState: AppState = AppState.Loading(0, (() => initialGameState) :: Resources.allResources)
-  val frameRate = LoopFrequency.hz60
-  val terminateWhen = (_: State) => false
+  val frameRate = LoopFrequency.Uncapped
+  val terminateWhen = (_: AppState) => false
 
   val tau = 2 * math.Pi
 
@@ -143,74 +144,82 @@ object Main extends MinartApp {
 
   lazy val initialGameState = Level.levels.head.initialState
 
-  val renderFrame = (state: State) => state match {
-    case AppState.Loading(_, Nil) =>
-      transitionTo(AppState.Menu)
-    case AppState.Loading(loaded, loadNext :: remaining) => for {
-      _ <- CanvasIO.clear()
-      _ <- Geom.renderRect(10, 224 - 20, 256 - 10, 224 - 10, Color(255, 255, 255))
-      _ <- Geom.renderRect(10 + 2, 224 - 20 + 2, 256 - 10 - 2, 224 - 10 - 2, Color(0, 0, 0))
-      percentage = loaded.toDouble / (loaded + remaining.size)
-      _ <- Geom.renderRect(10 + 3, 224 - 20 + 3, (percentage * (256 - 10 - 3)).toInt, 224 - 10 - 3, Color(255, 255, 255))
-      _ <- CanvasIO.redraw
-      _ = loadNext()
-    } yield AppState.Loading(loaded + 1, remaining)
-    case AppState.Menu =>
-      for {
-        keyboard <- CanvasIO.getKeyboardInput
+  val appLoop = AppLoop.statefulRenderLoop { (state: AppState) =>
+    state match {
+      case AppState.Loading(_, Nil) =>
+        transitionTo(AppState.Menu)
+      case AppState.Loading(loaded, loadNext :: remaining) => for {
         _ <- CanvasIO.clear()
-        _ <- RenderOps.renderBackground.andThen(RenderOps.renderLogo)
-        newState <- if (keyboard.keysPressed(Key.Enter)) transitionTo(AppState.Intro(0.005, initialGameState, true))
-        else CanvasIO.suspend(state)
+        _ <- Geom.renderRect(10, 224 - 20, 256 - 10, 224 - 10, Color(255, 255, 255))
+        _ <- Geom.renderRect(10 + 2, 224 - 20 + 2, 256 - 10 - 2, 224 - 10 - 2, Color(0, 0, 0))
+        percentage = loaded.toDouble / (loaded + remaining.size)
+        _ <- Geom.renderRect(10 + 3, 224 - 20 + 3, (percentage * (256 - 10 - 3)).toInt, 224 - 10 - 3, Color(255, 255, 255))
         _ <- CanvasIO.redraw
-      } yield newState
-    case AppState.Intro(scale, nextState, noSound) =>
-      for {
-        _ <- CanvasIO.clear()
-        transform = Transformation.Translate(-nextState.player.x, -nextState.player.y)
-          .andThen(Transformation.Scale(scale))
-          .andThen(Transformation.Rotate(scale * tau))
-          .andThen(Transformation.Translate(128, 112))
-        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(nextState.level.track, transform, Color(0, 0, 0)))
-        newState <- if (scale < 1.0) CanvasIO.suspend(AppState.Intro(scale + 0.005, nextState, noSound))
-        else if (noSound) transitionTo(nextState)
-        else CanvasIO.suspend(nextState)
-        _ <- CanvasIO.redraw
-      } yield newState
-    case AppState.Outro(scale, lastState) =>
-      for {
-        _ <- CanvasIO.clear()
-        transform = Transformation.Translate(-lastState.player.x, -lastState.player.y)
-          .andThen(Transformation.Scale(scale))
-          .andThen(Transformation.Rotate(scale * tau))
-          .andThen(Transformation.Translate(128, 112))
-        _ <- RenderOps.renderBackground.andThen(RenderOps.renderTransformed(lastState.level.track, transform, Color(0, 0, 0)))
-        newState <- if (scale <= 0.0) {
-          if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
-            if (lastState.level == Level.levels.last) transitionTo(AppState.Menu)
-            else RIO.suspend(AppState.Intro(0.005, Level.levels.dropWhile(_ != lastState.level).tail.head.initialState, noSound = false))
-          else transitionTo(AppState.GameOver(lastState.level))
-        } else RIO.suspend(AppState.Outro(scale - 0.005, lastState))
-        _ <- CanvasIO.redraw
-      } yield newState
-    case gs: AppState.GameState =>
-      for {
-        keyboard <- CanvasIO.getKeyboardInput
-        _ = frameCounter()
-        _ <- CanvasIO.clear()
-        _ <- RenderOps.renderGameState(gs, keyboard)
-        newState = updateGameState(gs, keyboard)
-        _ <- CanvasIO.redraw
-      } yield newState
-    case AppState.GameOver(level) =>
-      for {
-        keyboard <- CanvasIO.getKeyboardInput
-        _ <- CanvasIO.clear()
-        _ <- RenderOps.renderBackground.andThen(RenderOps.renderGameOver)
-        newState <- if (keyboard.isDown(Key.Enter)) transitionTo(AppState.Intro(0.005, level.initialState, noSound = true))
-        else if (keyboard.isDown(Key.Backspace)) transitionTo(AppState.Menu)
-        else CanvasIO.suspend(state)
-        _ <- CanvasIO.redraw
-      } yield newState
-  }
+        _ = loadNext()
+      } yield AppState.Loading(loaded + 1, remaining)
+      case AppState.Menu =>
+        for {
+          keyboard <- CanvasIO.getKeyboardInput
+          _ <- CanvasIO.clear()
+          _ <- RenderOps.renderBackground.andThen(RenderOps.renderLogo)
+          newState <- if (keyboard.keysPressed(Key.Enter)) transitionTo(AppState.Intro(0.005, initialGameState, true))
+          else CanvasIO.suspend(state)
+          _ <- CanvasIO.redraw
+        } yield newState
+      case AppState.Intro(scale, nextState, noSound) =>
+        for {
+          _ <- CanvasIO.clear()
+          surface = nextState.level.track
+            .translate(-nextState.player.x, -nextState.player.y)
+            .scale(scale, scale)
+            .rotate(scale * tau)
+            .translate(128, 112)
+            .toSurfaceView(256, 224)
+          _ <- RenderOps.renderBackground
+          _ <- CanvasIO.blit(surface, Some(Color(0, 0, 0)))(0, 0)
+          newState <- if (scale < 1.0) CanvasIO.suspend(AppState.Intro(scale + 0.005, nextState, noSound))
+          else if (noSound) transitionTo(nextState)
+          else CanvasIO.suspend(nextState)
+          _ <- CanvasIO.redraw
+        } yield newState
+      case AppState.Outro(scale, lastState) =>
+        for {
+          _ <- CanvasIO.clear()
+          surface = lastState.level.track
+            .translate(-lastState.player.x, -lastState.player.y)
+            .scale(scale, scale)
+            .rotate(scale * tau)
+            .translate(128, 112)
+            .toSurfaceView(256, 224)
+          _ <- RenderOps.renderBackground
+          _ <- CanvasIO.blit(surface, Some(Color(0, 0, 0)))(0, 0)
+          newState <- if (scale <= 0.0) {
+            if (lastState.isEndGame == Some(AppState.GameState.EndGame.PlayerWins))
+              if (lastState.level == Level.levels.last) transitionTo(AppState.Menu)
+              else RIO.suspend(AppState.Intro(0.005, Level.levels.dropWhile(_ != lastState.level).tail.head.initialState, noSound = false))
+            else transitionTo(AppState.GameOver(lastState.level))
+          } else RIO.suspend(AppState.Outro(scale - 0.005, lastState))
+          _ <- CanvasIO.redraw
+        } yield newState
+      case gs: AppState.GameState =>
+        for {
+          keyboard <- CanvasIO.getKeyboardInput
+          _ = frameCounter()
+          _ <- CanvasIO.clear()
+          _ <- RenderOps.renderGameState(gs, keyboard)
+          newState = updateGameState(gs, keyboard)
+          _ <- CanvasIO.redraw
+        } yield newState
+      case AppState.GameOver(level) =>
+        for {
+          keyboard <- CanvasIO.getKeyboardInput
+          _ <- CanvasIO.clear()
+          _ <- RenderOps.renderBackground.andThen(RenderOps.renderGameOver)
+          newState <- if (keyboard.isDown(Key.Enter)) transitionTo(AppState.Intro(0.005, level.initialState, noSound = true))
+          else if (keyboard.isDown(Key.Backspace)) transitionTo(AppState.Menu)
+          else CanvasIO.suspend(state)
+          _ <- CanvasIO.redraw
+        } yield newState
+    }
+  }.configure(canvasSettings, frameRate, initialState)
 }

@@ -10,44 +10,32 @@ import eu.joaocosta.minart.input.KeyboardInput.Key
 import eu.joaocosta.minart.runtime._
 
 object RenderOps {
-  lazy val renderLogo: CanvasIO[Unit] = Resources.logo.map { surface =>
-    CanvasIO.blit(surface, Some(Color(0, 0, 0)))(0, 0)
-  }.getOrElse(CanvasIO.noop)
-  lazy val renderGameOver: CanvasIO[Unit] = Resources.gameOver.map { surface =>
-    CanvasIO.blit(surface, Some(Color(0, 0, 0)))(16, 96)
-  }.getOrElse(CanvasIO.noop)
-  lazy val renderBackground: CanvasIO[Unit] = Resources.background.map { surface =>
-    CanvasIO.blit(surface)(0, 0)
-  }.getOrElse(CanvasIO.noop)
+  lazy val renderLogo: CanvasIO[Unit] = CanvasIO.blit(Resources.logo, Some(Color(0, 0, 0)))(0, 0)
+  lazy val renderGameOver: CanvasIO[Unit] = CanvasIO.blit(Resources.gameOver, Some(Color(0, 0, 0)))(16, 96)
+  lazy val renderBackground: CanvasIO[Unit] = CanvasIO.blit(Resources.background)(0, 0)
 
-  lazy val (renderShipLeft, renderShipBase, renderShipRight) = Resources.character.map { surface =>
+  lazy val (renderShipLeft, renderShipBase, renderShipRight) = {
     val mask = Color(255, 255, 255)
     (
-      CanvasIO.blit(surface.getSprite(0), Some(mask))(128 - 8, 112 - 8),
-      CanvasIO.blit(surface.getSprite(1), Some(mask))(128 - 8, 112 - 8),
-      CanvasIO.blit(surface.getSprite(2), Some(mask))(128 - 8, 112 - 8))
-  }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
+      CanvasIO.blit(Resources.character.getSprite(0), Some(mask))(128 - 8, 112 - 8),
+      CanvasIO.blit(Resources.character.getSprite(1), Some(mask))(128 - 8, 112 - 8),
+      CanvasIO.blit(Resources.character.getSprite(2), Some(mask))(128 - 8, 112 - 8))
+  }
 
-  lazy val (renderJetLow, renderJetHigh, renderJetBoostLow, renderJetBoostHigh) = Resources.jets.map { surface =>
+  lazy val (renderJetLow, renderJetHigh, renderJetBoostLow, renderJetBoostHigh) = {
     val mask = Color(255, 255, 255)
     (
-      CanvasIO.blit(surface.getSprite(0), Some(mask))(128 - 8, 112 + 8),
-      CanvasIO.blit(surface.getSprite(1), Some(mask))(128 - 8, 112 + 8),
-      CanvasIO.blit(surface.getSprite(2), Some(mask))(128 - 8, 112 + 8),
-      CanvasIO.blit(surface.getSprite(3), Some(mask))(128 - 8, 112 + 8))
-  }.getOrElse((CanvasIO.noop, CanvasIO.noop, CanvasIO.noop, CanvasIO.noop))
+      CanvasIO.blit(Resources.jets.getSprite(0), Some(mask))(128 - 8, 112 + 8),
+      CanvasIO.blit(Resources.jets.getSprite(1), Some(mask))(128 - 8, 112 + 8),
+      CanvasIO.blit(Resources.jets.getSprite(2), Some(mask))(128 - 8, 112 + 8),
+      CanvasIO.blit(Resources.jets.getSprite(3), Some(mask))(128 - 8, 112 + 8))
+  }
 
   def renderBoost(boostLevel: Double): CanvasIO[Unit] =
-    (for {
-      boostEmpty <- Resources.boostEmpty
-      boostFull <- Resources.boostFull
-    } yield CanvasIO.blit(boostEmpty)(0, 0).andThen(CanvasIO.blit(boostFull)(0, 0, 0, 0, (64 * boostLevel).toInt, 8))).getOrElse(CanvasIO.noop)
+    CanvasIO.blit(Resources.boostEmpty)(0, 0).andThen(CanvasIO.blit(Resources.boostFull)(0, 0, 0, 0, (64 * boostLevel).toInt, 8))
 
   def renderFuel(fuelLevel: Double): CanvasIO[Unit] =
-    (for {
-      fuelEmpty <- Resources.fuelEmpty
-      fuelFull <- Resources.fuelFull
-    } yield CanvasIO.blit(fuelEmpty)(0, 8).andThen(CanvasIO.blit(fuelFull)(0, 8, 0, 0, (64 * fuelLevel).toInt, 8))).getOrElse(CanvasIO.noop)
+    CanvasIO.blit(Resources.fuelEmpty)(0, 8).andThen(CanvasIO.blit(Resources.fuelFull)(0, 8, 0, 0, (64 * fuelLevel).toInt, 8))
 
   def renderPlayer(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val renderShip =
@@ -64,43 +52,24 @@ object RenderOps {
     renderJets.andThen(renderShip)
   }
 
-  // Firefox seems to have some performance problems with this.
-  // To be investigated.
-  /*def renderTransformed(image: RamSurface, transform: Transformation, colorMask: Color) = CanvasIO.blit(
-    Plane.fromSurfaceWithFallback(image, colorMask)
-      .contramap((x, y) => transform.applyInt(x, y))
-      .toSurfaceView(256, 224),
-    Some(colorMask))(0, 0)*/
-
-  private val rows = (0 until 224)
-  private val columns = (0 until 256)
-
-  def renderTransformed(image: RamSurface, transform: Transformation, colorMask: Color) = CanvasIO.accessCanvas { canvas =>
-    rows.foreach { y =>
-      columns.foreach { x =>
-        val (ix, iy) = transform(x, y)
-        image.getPixel(ix.toInt, iy.toInt).foreach { color =>
-          if (colorMask != color) canvas.putPixel(x, y, color)
-        }
-      }
-    }
-  }
-
   def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
-    val mapTransform =
-      Transformation.Translate(-state.player.x, -state.player.y)
-        .andThen(Transformation.Rotate(state.player.rotation))
-        .andThen(Transformation.Translate(128, 112))
-    val timeRiftTransform =
-      Transformation.Translate(-128, -128)
-        .andThen(Transformation.Rotate(state.timeRift.rotation))
-        .andThen(Transformation.Translate(state.timeRift.x, state.timeRift.y))
-        .andThen(mapTransform)
+    val map = state.level.track
+      .translate(-state.player.x, -state.player.y)
+      .rotate(state.player.rotation)
+      .translate(128, 112)
+    val timeRift =
+      Resources.timeRift
+        .translate(-128, -128)
+        .rotate(state.timeRift.rotation)
+        .translate(state.timeRift.x, state.timeRift.y)
+        .translate(-state.player.x, -state.player.y)
+        .rotate(state.player.rotation)
+        .translate(128, 112)
     CanvasIO.sequence_(List(
       renderBackground,
-      renderTransformed(state.level.track, mapTransform, Color(0, 0, 0)),
+      CanvasIO.blit(map.toSurfaceView(256, 224), Some(Color(0, 0, 0)))(0, 0),
       renderPlayer(keyboardInput),
-      renderTransformed(Resources.timeRift.get, timeRiftTransform, Color(255, 0, 255)),
+      CanvasIO.blit(timeRift.toSurfaceView(256, 224), Some(Color(255, 0, 255)))(0, 0),
       renderBoost(state.player.boost),
       renderFuel(state.player.fuel)))
   }

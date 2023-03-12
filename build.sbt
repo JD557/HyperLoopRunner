@@ -8,9 +8,9 @@ lazy val ld47 =
   crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("."))
   .settings(Seq(
-    scalaVersion := "3.1.2",
+    scalaVersion := "3.2.2",
     libraryDependencies ++= List(
-      "eu.joaocosta" %%% "minart" % "0.4.0",
+      "eu.joaocosta" %%% "minart" % "0.5.0-SNAPSHOT",
     )
   ))
   .jsSettings(Seq(
@@ -20,6 +20,6 @@ lazy val ld47 =
     nativeLinkStubs := true,
     nativeMode := "release-full",
     nativeLTO := "thin",
-    nativeGC := "commix"
+    nativeGC := "immix"
   ))
   .settings(name := "ld47")

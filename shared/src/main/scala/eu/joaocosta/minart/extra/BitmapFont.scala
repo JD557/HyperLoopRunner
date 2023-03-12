@@ -17,7 +17,7 @@ case class BitmapFont(
   def renderChar(char: Char, x: Int, y: Int): MSurfaceIO[Unit] = {
     val offset = char - startingChar
     MSurfaceIO.when(offset >= 0 && offset < maxOffest)(
-      MSurfaceIO.blitWithMask(spriteSheet.getSprite(offset), mask)(x, y))
+      MSurfaceIO.blit(spriteSheet.getSprite(offset), Some(mask))(x, y))
   }
 
   def renderText(str: String, x: Int, y: Int): MSurfaceIO[Unit] =

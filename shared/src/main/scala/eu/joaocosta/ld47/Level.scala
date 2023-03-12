@@ -7,7 +7,7 @@ import eu.joaocosta.minart.graphics.image._
 import eu.joaocosta.minart.backend.defaults._
 
 case class Level(
-  track: RamSurface,
+  track: Plane,
   collisionMap: RamSurface,
   startPosition: (Float, Float),
   riftWaypoints: List[(Float, Float)],
@@ -32,7 +32,8 @@ case class Level(
 object Level {
   val levels = List(
     Level(
-      track = Image.loadQoiImage(Resource("assets/leveltut-map.qoi")).get,
+      track = Image.loadQoiImage(Resource("assets/leveltut-map.qoi")).map(surface =>
+        Plane.fromSurfaceWithFallback(surface, Color(0, 0, 0))).get,
       collisionMap = Image.loadQoiImage(Resource("assets/leveltut-col.qoi")).get,
       startPosition = (512, 128),
       riftWaypoints = List(
@@ -42,7 +43,8 @@ object Level {
         (500, 512)),
       riftSpeed = 0.1f),
     Level(
-      track = Image.loadQoiImage(Resource("assets/level1-map.qoi")).get,
+      track = Image.loadQoiImage(Resource("assets/level1-map.qoi")).map(surface =>
+        Plane.fromSurfaceWithFallback(surface, Color(0, 0, 0))).get,
       collisionMap = Image.loadQoiImage(Resource("assets/level1-col.qoi")).get,
       startPosition = (920, 580),
       riftWaypoints = List(
@@ -57,7 +59,8 @@ object Level {
         (110, 960)),
       riftSpeed = 2.7f),
     Level(
-      track = Image.loadQoiImage(Resource("assets/level2-map.qoi")).get,
+      track = Image.loadQoiImage(Resource("assets/level2-map.qoi")).map(surface =>
+        Plane.fromSurfaceWithFallback(surface, Color(0, 0, 0))).get,
       collisionMap = Image.loadQoiImage(Resource("assets/level2-col.qoi")).get,
       startPosition = (75, 660),
       riftWaypoints = List(
@@ -74,7 +77,8 @@ object Level {
         (160, 920)),
       riftSpeed = 3.5f),
     Level(
-      track = Image.loadQoiImage(Resource("assets/level3-map.qoi")).get,
+      track = Image.loadQoiImage(Resource("assets/level3-map.qoi")).map(surface =>
+        Plane.fromSurfaceWithFallback(surface, Color(0, 0, 0))).get,
       collisionMap = Image.loadQoiImage(Resource("assets/level3-col.qoi")).get,
       startPosition = (75, 550),
       riftWaypoints = List(
@@ -94,7 +98,8 @@ object Level {
         (75, 935)),
       riftSpeed = 4.0f),
     Level(
-      track = Image.loadQoiImage(Resource("assets/levelboss-map.qoi")).get,
+      track = Image.loadQoiImage(Resource("assets/levelboss-map.qoi")).map(surface =>
+        Plane.fromSurfaceWithFallback(surface, Color(0, 0, 0))).get,
       collisionMap = Image.loadQoiImage(Resource("assets/levelboss-col.qoi")).get,
       startPosition = (512, 768),
       riftWaypoints = List(
