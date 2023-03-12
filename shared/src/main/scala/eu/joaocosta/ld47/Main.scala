@@ -1,7 +1,9 @@
 package eu.joaocosta.ld47
 
+import eu.joaocosta.minart.audio._
+import eu.joaocosta.minart.audio.pure._
 import eu.joaocosta.minart.backend.defaults._
-import eu.joaocosta.minart.extra._
+import eu.joaocosta.minart.backend.subsystem._
 import eu.joaocosta.minart.graphics._
 import eu.joaocosta.minart.graphics.pure._
 import eu.joaocosta.minart.input._
@@ -12,10 +14,10 @@ import eu.joaocosta.minart.runtime.pure._
 import scala.io.Source
 import scala.concurrent.duration._
 
-object Main extends MinartApp[AppState, LowLevelCanvas] {
+object Main extends MinartApp[AppState, AppLoop.LowLevelAllSubsystems] {
 
   val loopRunner = LoopRunner()
-  val createSubsystem = () => LowLevelCanvas.create()
+  val createSubsystem = () => LowLevelCanvas.create() ++ LowLevelAudioPlayer.create()
 
   val canvasSettings = Canvas.Settings(
     width = 256,
@@ -24,7 +26,7 @@ object Main extends MinartApp[AppState, LowLevelCanvas] {
     clearColor = Color(0, 0, 0))
 
   val initialState: AppState = AppState.Loading(0, (() => initialGameState) :: Resources.allResources)
-  val frameRate = LoopFrequency.Uncapped
+  val frameRate = LoopFrequency.hz60
   val terminateWhen = (_: AppState) => false
 
   val tau = 2 * math.Pi
@@ -130,30 +132,39 @@ object Main extends MinartApp[AppState, LowLevelCanvas] {
     }
   }
 
-  def transitionTo(state: AppState): CanvasIO[AppState] = state match {
+  def transitionTo(state: AppState): AudioPlayerIO[AppState] = state match {
     case AppState.Menu =>
-      Resources.bgSoundChannel.playLooped(Resources.menuSound).as(state)
+      for {
+        _ <- AudioPlayerIO.stop
+        _ <- AudioPlayerIO.play(Resources.menuSound.repeating)
+      } yield state
     case _: AppState.Intro =>
-      Resources.bgSoundChannel.stop.as(state)
+      AudioPlayerIO.stop.as(state)
     case _: AppState.GameState =>
-      Resources.bgSoundChannel.playLooped(Resources.ingameSound).as(state)
+      for {
+        _ <- AudioPlayerIO.stop
+        _ <- AudioPlayerIO.play(Resources.ingameSound.repeating)
+      } yield state
     case _: AppState.GameOver =>
-      Resources.bgSoundChannel.playOnce(Resources.gameoverSound).as(state)
-    case _ => CanvasIO.pure(state)
+      for {
+        _ <- AudioPlayerIO.stop
+        _ <- AudioPlayerIO.play(Resources.gameoverSound)
+      } yield state
+    case _ => RIO.pure(state)
   }
 
   lazy val initialGameState = Level.levels.head.initialState
 
-  val appLoop = AppLoop.statefulRenderLoop { (state: AppState) =>
+  val appLoop = AppLoop.statefulAppLoop { (state: AppState) =>
     state match {
       case AppState.Loading(_, Nil) =>
         transitionTo(AppState.Menu)
       case AppState.Loading(loaded, loadNext :: remaining) => for {
         _ <- CanvasIO.clear()
-        _ <- Geom.renderRect(10, 224 - 20, 256 - 10, 224 - 10, Color(255, 255, 255))
-        _ <- Geom.renderRect(10 + 2, 224 - 20 + 2, 256 - 10 - 2, 224 - 10 - 2, Color(0, 0, 0))
+        _ <- CanvasIO.fillRegion(10, 224 - 20, 256 - 20, 10, Color(255, 255, 255))
+        _ <- CanvasIO.fillRegion(10 + 2, 224 - 20 + 2, 256 - 20 - 4, 10 - 4, Color(0, 0, 0))
         percentage = loaded.toDouble / (loaded + remaining.size)
-        _ <- Geom.renderRect(10 + 3, 224 - 20 + 3, (percentage * (256 - 10 - 3)).toInt, 224 - 10 - 3, Color(255, 255, 255))
+        _ <- CanvasIO.fillRegion(10 + 3, 224 - 20 + 3, (percentage * (256 - 20 - 6)).toInt, 10 - 6, Color(255, 255, 255))
         _ <- CanvasIO.redraw
         _ = loadNext()
       } yield AppState.Loading(loaded + 1, remaining)
@@ -221,5 +232,5 @@ object Main extends MinartApp[AppState, LowLevelCanvas] {
           _ <- CanvasIO.redraw
         } yield newState
     }
-  }.configure(canvasSettings, frameRate, initialState)
+  }.configure((canvasSettings, AudioPlayer.Settings()), frameRate, initialState)
 }

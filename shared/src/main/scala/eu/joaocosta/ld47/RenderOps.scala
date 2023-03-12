@@ -2,7 +2,6 @@ package eu.joaocosta.ld47
 
 import scala.util.Random
 
-import eu.joaocosta.minart.extra._
 import eu.joaocosta.minart.graphics._
 import eu.joaocosta.minart.graphics.pure._
 import eu.joaocosta.minart.input._
@@ -55,15 +54,15 @@ object RenderOps {
   def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
     val map = state.level.track
       .translate(-state.player.x, -state.player.y)
-      .rotate(state.player.rotation)
+      .rotate(-state.player.rotation)
       .translate(128, 112)
     val timeRift =
       Resources.timeRift
         .translate(-128, -128)
-        .rotate(state.timeRift.rotation)
+        .rotate(-state.timeRift.rotation)
         .translate(state.timeRift.x, state.timeRift.y)
         .translate(-state.player.x, -state.player.y)
-        .rotate(state.player.rotation)
+        .rotate(-state.player.rotation)
         .translate(128, 112)
     CanvasIO.sequence_(List(
       renderBackground,

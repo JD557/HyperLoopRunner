@@ -1,6 +1,5 @@
 package eu.joaocosta.ld47
 
-import eu.joaocosta.minart.extra._
 import eu.joaocosta.minart.runtime._
 import eu.joaocosta.minart.graphics._
 import eu.joaocosta.minart.graphics.image._
