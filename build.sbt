@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{ crossProject, CrossType }
 
 name := "Hyper Loop Runner"
 
-version := "1.4"
+version := "1.5"
 
 lazy val ld47 =
   crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -10,7 +10,7 @@ lazy val ld47 =
   .settings(Seq(
     scalaVersion := "3.2.2",
     libraryDependencies ++= List(
-      "eu.joaocosta" %%% "minart" % "0.5.0-SNAPSHOT",
+      "eu.joaocosta" %%% "minart" % "0.5.2",
     )
   ))
   .jsSettings(Seq(
@@ -20,6 +20,9 @@ lazy val ld47 =
     nativeLinkStubs := true,
     nativeMode := "release-full",
     nativeLTO := "thin",
-    nativeGC := "immix"
+    nativeGC := "commix",
+    nativeConfig ~= {
+      _.withEmbedResources(true)
+    }
   ))
   .settings(name := "ld47")

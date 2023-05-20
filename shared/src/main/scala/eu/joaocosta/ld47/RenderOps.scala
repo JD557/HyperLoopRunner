@@ -56,6 +56,7 @@ object RenderOps {
       .translate(-state.player.x, -state.player.y)
       .rotate(-state.player.rotation)
       .translate(128, 112)
+      .toSurfaceView(256, 224)
     val timeRift =
       Resources.timeRift
         .translate(-128, -128)
@@ -64,11 +65,12 @@ object RenderOps {
         .translate(-state.player.x, -state.player.y)
         .rotate(-state.player.rotation)
         .translate(128, 112)
+        .toSurfaceView(256, 224)
     CanvasIO.sequence_(List(
       renderBackground,
-      CanvasIO.blit(map.toSurfaceView(256, 224), Some(Color(0, 0, 0)))(0, 0),
+      CanvasIO.blit(map, Some(Color(0, 0, 0)))(0, 0),
       renderPlayer(keyboardInput),
-      CanvasIO.blit(timeRift.toSurfaceView(256, 224), Some(Color(255, 0, 255)))(0, 0),
+      CanvasIO.blit(timeRift, Some(Color(255, 0, 255)))(0, 0),
       renderBoost(state.player.boost),
       renderFuel(state.player.fuel)))
   }

@@ -26,9 +26,9 @@ object Resources {
   lazy val fuelFull = Image.loadQoiImage(Resource("assets/fuel-full.qoi")).get
   lazy val fuelEmpty = Image.loadQoiImage(Resource("assets/fuel-empty.qoi")).get
 
-  lazy val ingameSound = Sound.loadWavClip(Resource("assets/ingame-music.wav")).get
-  lazy val gameoverSound = Sound.loadWavClip(Resource("assets/gameover.wav")).get
-  lazy val menuSound = Sound.loadWavClip(Resource("assets/menu.wav")).get
+  lazy val ingameSound = Sound.loadQoaClip(Resource("assets/ingame-music.qoa")).get
+  lazy val gameoverSound = Sound.loadQoaClip(Resource("assets/gameover.qoa")).get
+  lazy val menuSound = Sound.loadQoaClip(Resource("assets/menu.qoa")).get
 
   val allResources: List[() => Any] = List(
     () => background,

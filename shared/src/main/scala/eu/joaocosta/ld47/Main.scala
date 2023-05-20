@@ -22,7 +22,7 @@ object Main extends MinartApp[AppState, AppLoop.LowLevelAllSubsystems] {
   val canvasSettings = Canvas.Settings(
     width = 256,
     height = 224,
-    scale = 2,
+    scale = Some(2),
     clearColor = Color(0, 0, 0))
 
   val initialState: AppState = AppState.Loading(0, (() => initialGameState) :: Resources.allResources)
