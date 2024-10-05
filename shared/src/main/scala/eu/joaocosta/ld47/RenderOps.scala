@@ -3,55 +3,55 @@ package eu.joaocosta.ld47
 import scala.util.Random
 
 import eu.joaocosta.minart.graphics._
-import eu.joaocosta.minart.graphics.pure._
 import eu.joaocosta.minart.input._
 import eu.joaocosta.minart.input.KeyboardInput.Key
 import eu.joaocosta.minart.runtime._
 
 object RenderOps {
-  lazy val renderLogo: CanvasIO[Unit] = CanvasIO.blit(Resources.logo, Some(Color(0, 0, 0)))(0, 0)
-  lazy val renderGameOver: CanvasIO[Unit] = CanvasIO.blit(Resources.gameOver, Some(Color(0, 0, 0)))(16, 96)
-  lazy val renderBackground: CanvasIO[Unit] = CanvasIO.blit(Resources.background)(0, 0)
+  def renderLogo(canvas: Canvas): Unit = canvas.blit(Resources.logo, BlendMode.ColorMask(Color(0, 0, 0)))(0, 0)
+  def renderGameOver(canvas: Canvas): Unit = canvas.blit(Resources.gameOver, BlendMode.ColorMask(Color(0, 0, 0)))(16, 96)
+  def renderBackground(canvas: Canvas): Unit = canvas.blit(Resources.background)(0, 0)
 
-  lazy val (renderShipLeft, renderShipBase, renderShipRight) = {
-    val mask = Color(255, 255, 255)
-    (
-      CanvasIO.blit(Resources.character.getSprite(0), Some(mask))(128 - 8, 112 - 8),
-      CanvasIO.blit(Resources.character.getSprite(1), Some(mask))(128 - 8, 112 - 8),
-      CanvasIO.blit(Resources.character.getSprite(2), Some(mask))(128 - 8, 112 - 8))
+  def renderShipLeft(canvas: Canvas): Unit =
+    canvas.blit(Resources.character.getSprite(0), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 - 8)
+  def renderShipBase(canvas: Canvas): Unit =
+    canvas.blit(Resources.character.getSprite(1), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 - 8)
+  def renderShipRight(canvas: Canvas): Unit =
+    canvas.blit(Resources.character.getSprite(2), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 - 8)
+
+  def renderJetLow(canvas: Canvas): Unit =
+    canvas.blit(Resources.jets.getSprite(0), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 + 8)
+  def renderJetHigh(canvas: Canvas): Unit =
+    canvas.blit(Resources.jets.getSprite(1), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 + 8)
+  def renderJetBoostLow(canvas: Canvas): Unit =
+    canvas.blit(Resources.jets.getSprite(2), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 + 8)
+  def renderJetBoostHigh(canvas: Canvas): Unit =
+    canvas.blit(Resources.jets.getSprite(3), BlendMode.ColorMask(Color(255, 255, 255)))(128 - 8, 112 + 8)
+
+  def renderBoost(canvas: Canvas, boostLevel: Double): Unit = {
+    canvas.blit(Resources.boostEmpty)(0, 0)
+    canvas.blit(Resources.boostFull)(0, 0, 0, 0, (64 * boostLevel).toInt, 8)
   }
 
-  lazy val (renderJetLow, renderJetHigh, renderJetBoostLow, renderJetBoostHigh) = {
-    val mask = Color(255, 255, 255)
-    (
-      CanvasIO.blit(Resources.jets.getSprite(0), Some(mask))(128 - 8, 112 + 8),
-      CanvasIO.blit(Resources.jets.getSprite(1), Some(mask))(128 - 8, 112 + 8),
-      CanvasIO.blit(Resources.jets.getSprite(2), Some(mask))(128 - 8, 112 + 8),
-      CanvasIO.blit(Resources.jets.getSprite(3), Some(mask))(128 - 8, 112 + 8))
+  def renderFuel(canvas: Canvas, fuelLevel: Double): Unit = {
+    canvas.blit(Resources.fuelEmpty)(0, 8)
+    canvas.blit(Resources.fuelFull)(0, 8, 0, 0, (64 * fuelLevel).toInt, 8)
   }
 
-  def renderBoost(boostLevel: Double): CanvasIO[Unit] =
-    CanvasIO.blit(Resources.boostEmpty)(0, 0).andThen(CanvasIO.blit(Resources.boostFull)(0, 0, 0, 0, (64 * boostLevel).toInt, 8))
-
-  def renderFuel(fuelLevel: Double): CanvasIO[Unit] =
-    CanvasIO.blit(Resources.fuelEmpty)(0, 8).andThen(CanvasIO.blit(Resources.fuelFull)(0, 8, 0, 0, (64 * fuelLevel).toInt, 8))
-
-  def renderPlayer(keyboardInput: KeyboardInput): CanvasIO[Unit] = {
-    val renderShip =
-      if (keyboardInput.isDown(Key.Left)) renderShipLeft
-      else if (keyboardInput.isDown(Key.Right)) renderShipRight
-      else renderShipBase
-    val renderJets: CanvasIO[Unit] =
-      if (keyboardInput.isDown(Key.Up))
-        if (keyboardInput.isDown(Key.Space))
-          CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetBoostHigh else renderJetBoostLow)
-        else
-          CanvasIO.suspend(Random.nextBoolean()).flatMap(if (_) renderJetHigh else renderJetLow)
-      else CanvasIO.noop
-    renderJets.andThen(renderShip)
+  def renderPlayer(canvas: Canvas, keyboardInput: KeyboardInput): Unit = {
+    // Render Jets
+    if (keyboardInput.isDown(Key.Up))
+      if (keyboardInput.isDown(Key.Space))
+        if (Random.nextBoolean()) renderJetBoostHigh(canvas) else renderJetBoostLow(canvas)
+      else
+        if (Random.nextBoolean()) renderJetHigh(canvas) else renderJetLow(canvas)
+    // Render Ship
+    if (keyboardInput.isDown(Key.Left)) renderShipLeft(canvas)
+    else if (keyboardInput.isDown(Key.Right)) renderShipRight(canvas)
+    else renderShipBase(canvas)
   }
 
-  def renderGameState(state: AppState.GameState, keyboardInput: KeyboardInput): CanvasIO[Unit] = {
+  def renderGameState(canvas: Canvas, state: AppState.GameState, keyboardInput: KeyboardInput): Unit = {
     val map = state.level.track
       .translate(-state.player.x, -state.player.y)
       .rotate(-state.player.rotation)
@@ -66,13 +66,12 @@ object RenderOps {
         .rotate(-state.player.rotation)
         .translate(128, 112)
         .toSurfaceView(256, 224)
-    CanvasIO.sequence_(List(
-      renderBackground,
-      CanvasIO.blit(map, Some(Color(0, 0, 0)))(0, 0),
-      renderPlayer(keyboardInput),
-      CanvasIO.blit(timeRift, Some(Color(255, 0, 255)))(0, 0),
-      renderBoost(state.player.boost),
-      renderFuel(state.player.fuel)))
+    renderBackground(canvas)
+    canvas.blit(map, BlendMode.ColorMask(Color(0, 0, 0)))(0, 0)
+    renderPlayer(canvas, keyboardInput)
+    canvas.blit(timeRift, BlendMode.ColorMask(Color(255, 0, 255)))(0, 0)
+    renderBoost(canvas, state.player.boost)
+    renderFuel(canvas, state.player.fuel)
   }
 
 }
